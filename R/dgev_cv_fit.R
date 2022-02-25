@@ -25,13 +25,13 @@
 #'
 #' @examples dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
 #' as.POSIXct("2020-12-31 23:00:00"),by = 'hour')
-#' prec <- rgamma(length(dates))
-#' example_data <- data.frame(MESS_DATUM = dates, RR = prec)
+#' prec <- rgamma(length(dates), shape = 0.1)
+#' example_data <- data.frame(datetime = dates, prec = prec)
 #'
 #' agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
 #' agdf <- fun_aggregate2df( example_data, ds = c(1,2,4,8,16, 24, 48) )
 #' concbm <- compute_conc_bm_id(agdf)
-#' cv_fit_eff(agbm, concbm, ds = c(1,2) , leave_out = c(2004, 2008, 2017),
+#' dgev_cv_fit(agbm, concbm, ds = c(1,2) , leave_out = c(2004, 2008, 2017),
 #'  quants = c(.5, .9, .99) )
 #'
 dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE,  dur_offset = FALSE,

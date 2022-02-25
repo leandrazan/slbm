@@ -16,6 +16,8 @@ fun_aggregate2df(data, ds, resolution = "hourly")
 \item{ds}{the durations for which you want to compute the intensity process.
 For each $d$, the intensity process is computed, which is the moving average over d observations
 of precipitation, computed within distinct years.}
+
+\item{resolution}{The resolution of the data, must be one of "hourly" or "daily"}
 }
 \value{
 returns a tibble with colums

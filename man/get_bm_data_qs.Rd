@@ -24,6 +24,6 @@ Get dataframes for use in quantile score functions
 }
 \examples{
 
-bm_data_qs(data.frame( obs = rnorm(50*30), Index = rep(1:50, each = 30)),
+get_bm_data_qs(data.frame( obs = rnorm(50*30), Index = rep(1:50, each = 30)),
 blcksz = 30)
 }

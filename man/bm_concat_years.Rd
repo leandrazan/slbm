@@ -28,6 +28,6 @@ Compute sliding block maxima of the time series obtained by concatenating
 observations from two arbitrary years.
 }
 \examples{
-df <- data.frame(obs = evd::rgpd(30*5), Year = rep(1:5, each = 30))
+df <- data.frame(obs = evd::rgpd(30*5), Index = rep(1:5, each = 30))
 bm_concat_years(df, 2, 4, blcksz = 30)
 }

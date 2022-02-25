@@ -16,6 +16,8 @@ fun_aggregate(data, d, resolution = "hourly")
 \item{d}{the duration for which you want to compute the intensity process.
 It is the number $d$ of observations over which the the moving average
 of precipitation is computed, computed within distinct years.}
+
+\item{resolution}{The resolution of the data, must be one of "hourly" or "daily"}
 }
 \value{
 returns a tibble with colum

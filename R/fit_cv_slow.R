@@ -21,7 +21,7 @@
 #'
 #' @examples
 #' df <- data.frame(obs = evd::rgpd(30*50), Index = rep(1:50, each = 30))
-#' fit_cv_iter(df, data.frame( obs = blockmax(df$obs, r = 30, "disjoint"), Index = 1:50),
+#' fit_cv_slow(df, data.frame( obs = blockmax(df$obs, r = 30, "disjoint"), Index = 1:50),
 #' leave_out = c(4, 35, 42),  blcksz = 30)
 fit_cv_slow <- function(data, djbm, leave_out, blcksz,
                         ps =  1-1/c(2,5,10, 20, 50, 100, 200 )){

@@ -1,0 +1,36 @@
+
+
+fit_dgev_cv_qs <- function(agg_bm, conc_bm, leave_out , ds,
+                           quants =  1-1/c(2,5,10, 20, 50, 100, 200 ), mult_sc = FALSE, 
+                           dur_offset = FALSE, int_offset = FALSE, testset = "consec", 
+                           n.lo = 3, n.cv = NULL, method = "both",
+                           optimMethod = "Nelder-Mead", Maxit = 1500, ... ){
+  n.years <- nrow(djbm)
+  #
+  if(testset == "consec") {
+    cvstart <- seq(1, n.years, n.lo)
+    sbst <- purrr::map(cvstart, ~ .x + (0:(n.lo -1)))
+    sbst[[length(sbst)]] <-  sbst[[length(sbst)]][ sbst[[length(sbst)]] <= n.years]
+    
+    n.cv <- length(sbst)
+  } else if( testset == "random") {
+    assertthat::assert_that(is.numeric(n.cv))
+    
+    all.subsets <- combn(n.years, n.lo, simplify = F)
+    sbst <- sample(all.subsets, min(n.cv, nrow(all.subsets)) )
+    n.cv <- length(sbst)
+  } else {
+    stop("This is not a valid method to construct the test set. Choose either 'consec' or 'random'")
+  }
+  
+  results_cv <- purrr::map_dfr(sbst, ~
+                                 tryCatch(
+                                   cv_fit_eff(djbm = djbm, slbm = slbm,
+                                              conc_bm = conc_bm, leave_out = .x, fixpar = fixpar,
+                                              method = method),
+                                   error = function(egal){tibble::tibble()}))
+  
+  
+  results_cv
+  
+}

@@ -8,6 +8,8 @@
 #' It is the number $d$ of observations over which the the moving average
 #' of precipitation is computed, computed within distinct years.
 #'
+#' @param resolution The resolution of the data, must be one of "hourly" or "daily"
+#'
 #' @return returns a tibble with colum
 #' * aggs: tibble of aggregated observations, Year they belong to and the duration d
 #' * djbm: tibble of annual maxima of the intensity duration process, along with

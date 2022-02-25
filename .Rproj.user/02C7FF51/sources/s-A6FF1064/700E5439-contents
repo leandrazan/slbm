@@ -7,6 +7,8 @@
 #' For each $d$, the intensity process is computed, which is the moving average over d observations
 #' of precipitation, computed within distinct years.
 #'
+#' @param resolution The resolution of the data, must be one of "hourly" or "daily"
+#'
 #' @return returns a tibble with colums
 #' * aggs: list of tibbles of aggregated observations, Year they belong to and the duration d.
 #' One tibble for each duration $d$

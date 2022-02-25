@@ -19,5 +19,5 @@ that fall into one year, when one has hourly observations on 365 days
 Compute blocksize for duration d
 }
 \examples{
-get.blcksz(4)
+get_blcksz(4)
 }

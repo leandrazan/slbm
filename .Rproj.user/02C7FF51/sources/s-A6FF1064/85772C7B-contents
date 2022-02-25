@@ -30,12 +30,7 @@ blockmax <- function(data, r, method=c("disjoint", "sliding")) {
                                                              (floor(n/r) +1)*r -n) ) ), nrow=r),
                                       MARGIN = 2,
                                       FUN=max , na.rm = TRUE),
-                   "sliding" = zoo::rollmax(data,r))
-  # result <- switch(method,
-  #                  "disjoint" = apply(X = matrix(data[1:(floor(n/r)*r)], nrow=r),
-  #                                     MARGIN = 2,
-  #                                     FUN=max , na.rm = TRUE),
-  #                  "sliding" = zoo::rollmax(data,r))
+                   "sliding" = RcppRoll::roll_max(data,r, na.rm = TRUE))
   return(result)
 }
 
