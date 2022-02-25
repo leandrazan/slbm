@@ -1,0 +1,27 @@
+{
+    "id": "F4548BA8",
+    "path": "C:/Users/leaz9/Desktop/GitHub/fitSBM/R/dgev_cv_fit.R",
+    "project_path": "R/dgev_cv_fit.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1645788207032.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "tempName": "Untitled2",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "30,63",
+        "scrollLine": "19"
+    },
+    "folds": "37|86|137|0|\n",
+    "lastKnownWriteTime": 1645794796,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1645794800950,
+    "read_only": false,
+    "read_only_alternatives": []
+}

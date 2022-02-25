@@ -1,0 +1,58 @@
+
+bm_concat_years_id <- function(agg_df, year1, year2, blcksz = 8760){
+  agg_df <- agg_df %>% dplyr::mutate(conc_ts = purrr::map(aggs, function(.x){
+    .x %>% dplyr::filter(Year %in% c(year1, year2))
+  }))
+  agg_df %>%
+    dplyr::mutate(conc_slbm = purrr::map(conc_ts, ~ blockmax(.x$agg.sum, r = blcksz, "sliding"))) %>%
+    dplyr::select(conc_slbm, duration)
+}
+
+
+#' #' Compute concatenated block maxima
+#' @description Compute sliding block maxima of the intensity duration process
+#' for all possible compositions of years
+#' arising from cross validation with test set of size given in 'nlo'
+#'
+#'
+#' @param agg_df Dataframe with values of intensity duration process; output of
+#' function 'fun_aggregate2df'
+#' @param nlo number of Indices (years/seasons ...) that make up the test set
+#' @param resolution Resolution of the data
+#'
+#' @return A tibble with
+#' * conc_slbm: sliding block maxima as obtained when observations with the i
+#' @export
+#'
+#' @examples
+#' dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
+#' as.POSIXct("2005-12-31 23:00:00"),by = 'hour')
+#' prec <- rgamma(length(dates), shape = 0.1)
+#' ExampleData <- data.frame(datetime = dates, prec = prec)
+#'
+#' aggdat <-  fun_aggregate2df(ExampleData, ds = c(1,5,8))
+#' compute_conc_bm_id(aggdat, nlo = 2)
+#'
+compute_conc_bm_id <- function(agg_df, nlo = 3, resolution = "hourly"){
+  blcksz <- 8760
+  if(resolution == "daily"){ blcksz <- 365}
+
+  years_obs <- agg_df$djbm[[1]]$Year
+  ny <- length(years_obs)
+
+  start_year <- tibble::tibble(ind1 = rep(years_obs, each = nlo), index = rep(2:(nlo+1), ny))
+  start_year <- start_year %>% dplyr::mutate(ind2 = ind1 + index)
+  start_year <- start_year %>%
+    dplyr::mutate(ind2= ifelse(ind2 <= max(years_obs), ind2, ind2 - ny))
+  start_year <- start_year %>% dplyr::select(-index)
+
+  df_conc_slbms <-  start_year %>%
+    dplyr::mutate( newslbm = purrr::map2(.x = ind1, .y = ind2  ,
+                           .f = function(.x, .y){
+                             tryCatch(bm_concat_years_id(agg_df = agg_df, year1 = .x, year2 = .y, blcksz = blcksz),
+                                      error = function(e) NA)
+                           }) )
+
+  return(df_conc_slbms)
+}
+

@@ -1,43 +1,5 @@
 
 
-nllh.sl.d <- function( parvec, bm_uni, sigma0link = make.link("log"), dur_offset = F ){
-
-  mut <- parvec[["mut"]]
-  sigma0 <-  parvec[["sigma0"]]  #  sigma0link$linkfun(parvec[["sigma0"]]) # parvec contains the value tilde(sigma0) = exp(sigma0) > 0
-  xi <- parvec[["shape"]]
-  if(!(dur_offset) ) {
-    theta <- 0
-  } else{
-    theta <- parvec[["theta"]]
-  }
-  eta <- parvec[["eta"]]
-
-  d <- bm_uni$duration
-
-  dpt <- d + theta
-  sigma.d <- sigma0/(dpt^eta)  # sigma0link$linkinv(sigma0)/(dpt^eta)
-  y <- bm_uni$sldata/sigma.d - mut
-  y <- 1 + xi * y
-
-  if (dur_offset) {
-    if ( eta <= 0 ||  theta < 0  || any(sigma.d <= 0) || any(y <= 0) || theta > 1 )
-      return(10^6)
-  } else {
-    if ( eta <= 0  || any(sigma.d <= 0) || any(y <=
-                                               0))
-      return(10^6)
-  }
-
-
-  nllh.value <- 1/sum(bm_uni$n)*
-    as.numeric(t( bm_uni$n) %*% ( log(sigma.d) + y^(-1/xi) + log(y) * (1/xi +
-                                                                         1)))
-
-
-  return( nllh.value )
-
-}
-
 
 #' Maximum Likelihood fitting of the d-GEV distribution to the sample of disjoint and
 #' sliding block maxima
