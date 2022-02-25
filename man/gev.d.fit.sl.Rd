@@ -6,11 +6,11 @@
 \usage{
 gev.d.fit.sl(
   agg_bm,
-  mult_sc = TRUE,
+  mult_sc = FALSE,
   dur_offset = FALSE,
   int_offset = FALSE,
   sigma0link = make.link("log"),
-  method = "Nelder-Mead",
+  optimMethod = "Nelder-Mead",
   Maxit = 1000,
   ...
 )
@@ -28,7 +28,7 @@ for different durations $d$}
 
 \item{sigma0link}{The link function for \eqn{\sigma_0}. Default is \code{ make.link("log")}.}
 
-\item{method}{The optimisation method used in \code{\link[=optim]{optim()}}.}
+\item{optimMethod}{The optimisation method used in \code{\link[=optim]{optim()}}.}
 
 \item{Maxit}{Passed to the control argument of \code{\link[=optim]{optim()}}:
 maximum number of iterations performed during the optimisation.}
@@ -38,7 +38,8 @@ maximum number of iterations performed during the optimisation.}
 \value{
 Returns a list with the following arguments:
 \itemize{
-\item mle : The vector of estimated parameters
+\item mle : A dataframe containing the estimated parameters based on disjoint and sliding block
+maxima as specified in column \code{estimator}
 \item conv: logical; whether optimisation succeeded
 \item nllh: value of the negative log-Likelihoods (disjoint and sliding)
 \item counts: Number of calls to the negative log-Likelihood
@@ -48,4 +49,13 @@ Returns a list with the following arguments:
 }
 \description{
 Fit d-GEV based on sliding BM
+}
+\examples{
+dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
+as.POSIXct("2020-12-31 23:00:00"),by = 'hour')
+prec <- rgamma(length(dates), shape = 0.1)
+example_data <- data.frame(datetime = dates, prec = prec)
+
+agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
+gev.d.fit.sl( agbm)
 }

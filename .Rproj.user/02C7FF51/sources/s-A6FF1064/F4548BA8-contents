@@ -6,12 +6,12 @@
 #' for the test set
 #' @param leave_out The index (i.e. years/seasons ...) that make up the test set.
 #' These years are left out in the fitting procedure.
-#' @param ds Vector of durations.
+#' @param ds Vector of durations for which quantile of the d-GEV is estimated.
 #' @param quants Vector of quantiles to estimate based on the d-GEV fit.
 #' @param mult_sc logical. Whether to fit a multi-scale parameter eta2
 #' @param dur_offset logical. Whether to fit a duration offset parameter theta
 #' @param int_offset logical. Whether to fit an intensity offset parameter tau
-#' @param method Optimisation method used in [optim()].
+#' @param optimMethod Optimisation method used in [optim()].
 #' @param Maxit Passed to the control argument of [optim()]:
 #' maximum number of iterations performed during the optimisation.
 #' @param ... Further arguments that can be passed to the control argument of [optim()].
@@ -20,7 +20,9 @@
 #' a code for the convergence (zero indicates successful convergence), the values of \eqn{p} for
 #' which quantiles are estimated, the values of the durations \eqn{d} for which
 #' quantiles are estimated, the test set (data that is used for computing the quantile score)
-#' and the quantile score.
+#' and the quantile score. Quantile Scores can only be computed for those durations which are also
+#' present in the testdata.
+#'
 #' @export
 #'
 #' @examples dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
@@ -35,7 +37,7 @@
 #'  quants = c(.5, .9, .99) )
 #'
 dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE,  dur_offset = FALSE,
-                       int_offset = FALSE, method = "Nelder-Mead", Maxit = 1500, ...){
+                       int_offset = FALSE, optimMethod = "Nelder-Mead", Maxit = 1500, ...){
 
   agg_bm_test <- agg_bm %>% dplyr::select(djbm) %>%
     tidyr::unnest(cols = djbm) %>% dplyr::filter(Year %in% leave_out)
@@ -86,7 +88,7 @@ dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE
 
 
   fitb <- gev.d.fit.sl(agg_bm = agg_bm, mult_sc = mult_sc,
-                                 dur_offset = dur_offset, int_offset = int_offset, method = method,
+                                 dur_offset = dur_offset, int_offset = int_offset, method = optimMethod,
                        Maxit = Maxit, ...)
 
   mlest <- dplyr::bind_cols(fitb$mle, conv =  fitb$conv)
@@ -124,13 +126,14 @@ dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE
     dplyr::select(-Year)
 
   zns <- dplyr::rename(zns, "ds"= "duration")
-  zns <- zns %>% dplyr::group_by(ds) %>% tidyr::nest(djdat = djdata)
+  zns <- zns %>% dplyr::group_by(ds) %>% tidyr::nest(Testdata = djdata)
   table_quants <- dplyr::left_join(table_quants, zns, by = "ds")
   table_quants <- table_quants %>%
-    dplyr::mutate( quant_score = purrr::pmap_dbl( .l = list( .ps = ps , .q = est.quants, .obs = djdat),
+    dplyr::mutate( quant_score = purrr::pmap_dbl( .l = list( .ps = ps , .q = est.quants, .obs = Testdata),
                                                   .f = function(.ps, .q, .obs){
+                                                    if(is.null(.obs)){ NA} else{
                                                     compute_qs(obs = unlist(.obs) , quant.est = .q,
-                                                               p = .ps)
+                                                               p = .ps) }
                                                   })) %>%
     dplyr::arrange(ps, ds)
 
