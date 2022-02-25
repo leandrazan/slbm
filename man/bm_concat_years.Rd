@@ -3,7 +3,7 @@
 \name{bm_concat_years}
 \alias{bm_concat_years}
 \title{Compute sliding block maxima of the time series obtained by concatenating
- observations from two arbitrary years.}
+observations from two arbitrary years.}
 \usage{
 bm_concat_years(dailydata, ind1, ind2, blcksz = 90)
 }
@@ -25,7 +25,7 @@ a numeric vector containing the sliding block maxima
 }
 \description{
 Compute sliding block maxima of the time series obtained by concatenating
- observations from two arbitrary years.
+observations from two arbitrary years.
 }
 \examples{
 df <- data.frame(obs = evd::rgpd(30*5), Year = rep(1:5, each = 30))

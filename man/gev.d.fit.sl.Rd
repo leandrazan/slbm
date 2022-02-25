@@ -17,7 +17,7 @@ gev.d.fit.sl(
 }
 \arguments{
 \item{agg_bm}{Output of get_agg_bm, i.e. a tibble containing the sample of disjoint
- and sliding block maxima of the ID process,
+and sliding block maxima of the ID process,
 for different durations $d$}
 
 \item{mult_sc}{logical. Whether to fit a multi-scale parameter eta2}
@@ -28,21 +28,23 @@ for different durations $d$}
 
 \item{sigma0link}{The link function for \eqn{\sigma_0}. Default is \code{ make.link("log")}.}
 
-\item{method}{The optimisation method used in \code{\link{optim}}.}
+\item{method}{The optimisation method used in \code{\link[=optim]{optim()}}.}
 
-\item{Maxit}{Passed to the control argument of \code{\link{optim}}:
+\item{Maxit}{Passed to the control argument of \code{\link[=optim]{optim()}}:
 maximum number of iterations performed during the optimisation.}
 
-\item{...}{Further arguments that can be passed to the control argument of \code{\link{optim}}.}
+\item{...}{Further arguments that can be passed to the control argument of \code{\link[=optim]{optim()}}.}
 }
 \value{
 Returns a list with the following arguments:
-* mle : The vector of estimated parameters
-* conv: logical; whether optimisation succeeded
-* nllh: value of the negative log-Likelihoods (disjoint and sliding)
-* counts: Number of calls to the negative log-Likelihood
-* dur_offset: logical; whether the duration offset was fitted
-* mult_sc: logical; whether the duration offset was fitted
+\itemize{
+\item mle : The vector of estimated parameters
+\item conv: logical; whether optimisation succeeded
+\item nllh: value of the negative log-Likelihoods (disjoint and sliding)
+\item counts: Number of calls to the negative log-Likelihood
+\item dur_offset: logical; whether the duration offset was fitted
+\item mult_sc: logical; whether the duration offset was fitted
+}
 }
 \description{
 Fit d-GEV based on sliding BM

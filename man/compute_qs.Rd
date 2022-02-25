@@ -9,7 +9,7 @@ compute_qs(obs, quant.est, p)
 \arguments{
 \item{obs}{vector of observations from a test set}
 
-\item{quant.est}{value of estimated p*100% quantile}
+\item{quant.est}{value of estimated p*100\% quantile}
 
 \item{p}{probability}
 }

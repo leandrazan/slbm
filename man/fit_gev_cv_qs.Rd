@@ -63,5 +63,5 @@ cross-validation test set.
 }
 \description{
 Fit a GEV distribution to block maxima of a univariate time series,
- estimate quantiles and compute quantile scores based on cross-validation
+estimate quantiles and compute quantile scores based on cross-validation
 }

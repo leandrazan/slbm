@@ -7,7 +7,7 @@
 check_fun(u, p)
 }
 \arguments{
-\item{u}{Difference of observed maximum in a test set and estimated p*100% quantile}
+\item{u}{Difference of observed maximum in a test set and estimated p*100\% quantile}
 
 \item{probability}{}
 }

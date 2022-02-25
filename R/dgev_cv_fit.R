@@ -1,6 +1,6 @@
 #' d-GEV parameter estimation and quantile score evaluation on a test set
 #'
-#' @param agg_bm Tibble as obtained from the output of \code{\link{get_agg_bm()}}.
+#' @param agg_bm Tibble as obtained from the output of [get_agg_bm()()].
 #' @param conc_bm Tibble of sliding block maxima for all possible combinations of
 #' years/seasons that are consecutive after removing observations from a year/season
 #' for the test set
@@ -11,10 +11,10 @@
 #' @param mult_sc logical. Whether to fit a multi-scale parameter eta2
 #' @param dur_offset logical. Whether to fit a duration offset parameter theta
 #' @param int_offset logical. Whether to fit an intensity offset parameter tau
-#' @param method Optimisation method used in \code{\link{optim}}.
-#' @param Maxit Passed to the control argument of \code{\link{optim}}:
+#' @param method Optimisation method used in [optim()].
+#' @param Maxit Passed to the control argument of [optim()]:
 #' maximum number of iterations performed during the optimisation.
-#' @param ... Further arguments that can be passed to the control argument of \code{\link{optim}}.
+#' @param ... Further arguments that can be passed to the control argument of [optim()].
 #'
 #' @return Returns a tibble containing the estimated parameters, the estimation method,
 #' a code for the convergence (zero indicates successful convergence), the values of \eqn{p} for

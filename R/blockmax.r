@@ -1,12 +1,12 @@
 #' Compute Disjoint or Sliding Block Maxima of a Univariate Time Series
 #'
 #' @description For a given univariate time series of length n and block size
-#' parameter r (\eqn{1 \le r \le n}), \code{blockmax} computes either the time
+#' parameter r (\eqn{1 \le r \le n}), `blockmax` computes either the time
 #' series of disjoint (non-overlapping) or sliding (overlapping) block maxima.
 #'
 #' @param data a vector of length n representing the time series
 #' @param r the block length parameter
-#' @param method either \code{disjoint} or \code{sliding}
+#' @param method either `disjoint` or `sliding`
 #'
 #' @return The time series of disjoint block maxima
 #' (a vector of length \eqn{\lfloor n/r \rfloor})

@@ -6,11 +6,11 @@
 #' @param mult_sc logical. Whether to fit a multi-scale parameter eta2
 #' @param dur_offset logical. Whether to fit a duration offset parameter theta
 #' @param int_offset logical. Whether to fit an intensity offset parameter tau
-#' @param sigma0link The link function for \eqn{\sigma_0}. Default is \code{ make.link("log")}.
-#' @param method The optimisation method used in \code{\link{optim}}.
-#' @param Maxit Passed to the control argument of \code{\link{optim}}:
+#' @param sigma0link The link function for \eqn{\sigma_0}. Default is ` make.link("log")`.
+#' @param method The optimisation method used in [optim()].
+#' @param Maxit Passed to the control argument of [optim()]:
 #' maximum number of iterations performed during the optimisation.
-#' @param ... Further arguments that can be passed to the control argument of \code{\link{optim}}.
+#' @param ... Further arguments that can be passed to the control argument of [optim()].
 #' @return Returns a list with the following arguments:
 #' * mle : The vector of estimated parameters
 #' * conv: logical; whether optimisation succeeded

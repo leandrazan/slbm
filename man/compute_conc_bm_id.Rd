@@ -16,7 +16,9 @@ function 'fun_aggregate2df'}
 }
 \value{
 A tibble with
-* conc_slbm: sliding block maxima as obtained when observations with the i
+\itemize{
+\item conc_slbm: sliding block maxima as obtained when observations with the i
+}
 }
 \description{
 Compute sliding block maxima of the intensity duration process

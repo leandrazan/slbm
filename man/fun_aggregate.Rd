@@ -8,8 +8,10 @@ fun_aggregate(data, d, resolution = "hourly")
 }
 \arguments{
 \item{data}{a data frame or tibble of precipitation data, with a column named
-* datetime: containing the date-time of the observation as POSIXct, POSIXlt object
-* prec: containing the observed precipitation amount}
+\itemize{
+\item datetime: containing the date-time of the observation as POSIXct, POSIXlt object
+\item prec: containing the observed precipitation amount
+}}
 
 \item{d}{the duration for which you want to compute the intensity process.
 It is the number $d$ of observations over which the the moving average
@@ -17,9 +19,11 @@ of precipitation is computed, computed within distinct years.}
 }
 \value{
 returns a tibble with colum
-* aggs: tibble of aggregated observations, Year they belong to and the duration d
-* djbm: tibble of annual maxima of the intensity duration process, along with
-        corresponding year and duration
+\itemize{
+\item aggs: tibble of aggregated observations, Year they belong to and the duration d
+\item djbm: tibble of annual maxima of the intensity duration process, along with
+corresponding year and duration
+}
 }
 \description{
 Compute Intensity duration process and yearly block maxima for one duration $d$

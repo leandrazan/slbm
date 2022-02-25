@@ -3,7 +3,7 @@
     "path": "C:/Users/leaz9/Desktop/GitHub/fitSBM/R/gev_d_fit.R",
     "project_path": "R/gev_d_fit.R",
     "type": "r_source",
-    "hash": "1546795267",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1645784238796.0,
@@ -14,14 +14,14 @@
         "source_window_id": "",
         "Source": "Source",
         "cursorPosition": "110,0",
-        "scrollLine": "91"
+        "scrollLine": "32"
     },
     "folds": "",
-    "lastKnownWriteTime": 1645792257,
+    "lastKnownWriteTime": 1645795453,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1645792257874,
+    "last_content_update": 1645795453,
     "read_only": false,
     "read_only_alternatives": []
 }

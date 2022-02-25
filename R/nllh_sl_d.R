@@ -4,7 +4,7 @@
 #' @param bm_uni Dataframe containing the unqiue values of sliding block maxima along with
 #'  their frequency of appearance, for possibly several values of the duration $d$, as
 #'  specified in column 'duration'.
-#' @param sigma0link The link function for \eqn{\sigma_0}. Default is \code{make.link("log")}.
+#' @param sigma0link The link function for \eqn{\sigma_0}. Default is `make.link("log")`.
 #' @param mult_sc Whether or not you pass a multi-scaling parameter.
 #' @param dur_offset Whether or not you pass a duration offset parameter.
 #' @param int_offset Whether or not you pass an intensity offset parameter.

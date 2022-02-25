@@ -8,8 +8,10 @@ get_agg_bm(data, ds, resolution = "hourly")
 }
 \arguments{
 \item{data}{a data frame or tibble of precipitation data, with a column named
-* datetime: containing the date-time of the observation as POSIXct, POSIXlt object
-* prec: containing the observed precipitation amount}
+\itemize{
+\item datetime: containing the date-time of the observation as POSIXct, POSIXlt object
+\item prec: containing the observed precipitation amount
+}}
 
 \item{ds}{the durations for which you want to compute the ID process and its annual
 maxima}
