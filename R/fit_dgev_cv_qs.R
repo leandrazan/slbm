@@ -68,6 +68,7 @@ fit_dgev_cv_qs <- function(agg_bm, conc_bm, ds,
     cvstart <- seq(years_obs[1], years_obs[n.years], n.lo)
     sbst <- purrr::map(cvstart, ~ .x + (0:(n.lo -1)))
     sbst[[length(sbst)]] <-  sbst[[length(sbst)]][ sbst[[length(sbst)]] <= years_obs[n.years]]
+    sbst <- sbst[map(sbst, ~ length(.x)) == n.lo]
 
     n.cv <- length(sbst)
   } else if( testset == "random") {
@@ -91,7 +92,7 @@ fit_dgev_cv_qs <- function(agg_bm, conc_bm, ds,
             tibble::tibble( mut = NA, sigma0 = NA, shape = NA,
                                          eta = NA,
                                          estimator = NA,  ps = NA, ds  = NA,
-                                         est.quants = NA, djdat = NA, quant_score = NA)
+                                         est.quants = NA, Testdata = NA, quant_score = NA)
 
         } )
         }))

@@ -3,7 +3,7 @@
     "path": "C:/Users/leaz9/Desktop/GitHub/fitSBM/R/compute_conc_bm_id.R",
     "project_path": "R/compute_conc_bm_id.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "543623052",
     "contents": "",
     "dirty": false,
     "created": 1646302813602.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "60,0",
-        "scrollLine": "0"
+        "cursorPosition": "52,0",
+        "scrollLine": "43"
     },
     "folds": "",
-    "lastKnownWriteTime": 1646303207,
+    "lastKnownWriteTime": 1646321493,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1646303207158,
+    "last_content_update": 1646321493511,
     "read_only": false,
     "read_only_alternatives": []
 }

@@ -25,15 +25,16 @@
 #'
 #' @export
 #'
-#' @examples dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
+#' @examples
+#' dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
 #' as.POSIXct("2020-12-31 23:00:00"),by = 'hour')
 #' prec <- rgamma(length(dates), shape = 0.1)
 #' example_data <- data.frame(datetime = dates, prec = prec)
 #'
 #' agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
 #' agdf <- fun_aggregate2df( example_data, ds = c(1,2,4,8,16, 24, 48) )
-#' concbm <- compute_conc_bm_id(agdf)
-#' dgev_cv_fit(agbm, concbm, ds = c(1,2) , leave_out = c(2004, 2008, 2017),
+#' concbm <- compute_conc_bm_id(agdf, nlo = 3, testset = "consec")
+#' dgev_cv_fit(agbm, concbm, ds = c(1,2) , leave_out = c(2003, 2004, 2005),
 #'  quants = c(.5, .9, .99) )
 #'
 dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE,  dur_offset = FALSE,
@@ -57,30 +58,35 @@ dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE
   conc_bm <- conc_bm %>% dplyr::filter(ind1 %in% sl_lo$year2)  ## filter for possible new starting years
 
   # neither the new starting year nor the following year can be in the new sliding block
-  conc_bm <- conc_bm %>%
-    dplyr::filter(!(ind1 %in% leave_out) ) %>%
-    dplyr::filter(!(ind2 %in% leave_out))
+  if(nrow(conc_bm) == 0){
+    newsample <- sl_train1
+  } else {
+    conc_bm <- conc_bm %>%
+      dplyr::filter(!(ind1 %in% leave_out) ) %>%
+      dplyr::filter(!(ind2 %in% leave_out))
 
-  conc_bm <- conc_bm %>% dplyr::mutate(Diff = ind2 - ind1) %>%
-    dplyr::mutate(Diff = ifelse(Diff >= 0, Diff, Diff + minmaxn$Nobs)) %>%
-    dplyr::group_by(ind1) %>%
-    dplyr::filter(Diff == min(Diff)) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(-Diff)
+    conc_bm <- conc_bm %>% dplyr::mutate(Diff = ind2 - ind1) %>%
+      dplyr::mutate(Diff = ifelse(Diff >= 0, Diff, Diff + minmaxn$Nobs)) %>%
+      dplyr::group_by(ind1) %>%
+      dplyr::filter(Diff == min(Diff)) %>%
+      dplyr::ungroup() %>%
+      dplyr::select(-Diff)
 
-  conc_bm <- conc_bm %>% tidyr::unnest(cols = newslbm) %>%
-    dplyr::select(-c( ind2)) %>%
-    tidyr::unnest(cols = conc_slbm) %>%
-    dplyr::group_by(duration) %>%
-    tidyr::nest(cols = c( ind1 , conc_slbm))  %>% dplyr::ungroup()
+    conc_bm <- conc_bm %>% tidyr::unnest(cols = newslbm) %>%
+      dplyr::select(-c( ind2)) %>%
+      tidyr::unnest(cols = conc_slbm) %>%
+      dplyr::group_by(duration) %>%
+      tidyr::nest(cols = c( ind1 , conc_slbm))  %>% dplyr::ungroup()
 
 
-  newsample <- conc_bm %>% dplyr::left_join(sl_train1, by = "duration") %>%
-    dplyr::mutate(slbm = purrr::map2(.x = cols, .y = slbm , function(.x, .y){
-      .x <- dplyr::rename(.x, "Year" = ind1, "sldata" = conc_slbm)
-      dplyr::bind_rows(.x, .y)
+    newsample <- conc_bm %>% dplyr::left_join(sl_train1, by = "duration") %>%
+      dplyr::mutate(slbm = purrr::map2(.x = cols, .y = slbm , function(.x, .y){
+        .x <- dplyr::rename(.x, "Year" = ind1, "sldata" = conc_slbm)
+        dplyr::bind_rows(.x, .y)
 
-    })) %>% dplyr::select(-cols)
+      })) %>% dplyr::select(-cols)
+
+  }
 
 
   agg_bm <- dplyr::right_join(dj_train, newsample, by = "duration")

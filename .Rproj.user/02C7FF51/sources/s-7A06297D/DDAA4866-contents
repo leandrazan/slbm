@@ -14,9 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, warning=FALSE, message=FALSE}
 library(IDFsl)
-library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
 ```
 
 This vignette explains how to use the functions provided in the `fitSBM` package
@@ -74,7 +77,7 @@ Since we want to perform cross-validation with test sets of size 3 (containing
 disjoint block maxima from three consecutive years), we specify `nlo = 3`. 
 ```{r}
 agdf <- fun_aggregate2df(precEssen, ds = dur )
-concbm <- compute_conc_bm_id(agdf, nlo = 3) # takes a while.
+concbm <- compute_conc_bm_id(agdf, nlo = 3, testset = "consec") # takes a while.
 concbm
 ```
 
@@ -104,7 +107,7 @@ QSI <- meanQS %>% pivot_wider( names_from = estimator, values_from = MQS) %>%
   mutate( QSI = purrr::map2_dbl( .x = disjoint, .y = sliding, ~ compute_qsi(.y, .x)))
 QSI
 ```
-```{r, fig.width=10cm}
+```{r, fig.width=6}
 QSI %>% 
   ggplot() +
     geom_tile(aes(fill = QSI,
@@ -150,7 +153,7 @@ The rest works just as for the default case (with seasonlength 365 days) above:
 ```{r}
 agdf <- fun_aggregate2df(data = precEssen, ds = dur, seasonlength = 92)
 agbm <- get_agg_bm(data = precEssen, ds = dur, seasonlength = 92) 
-concbm <- compute_conc_bm_id(agdf, seasonlength = 92)
+concbm <- compute_conc_bm_id(agdf, seasonlength = 92, testset = "consec")
 cv_res <- fit_dgev_cv_qs(agg_bm = agbm, conc_bm = concbm, ds = dur, 
                          quants = c(0.5, 0.8, 0.9, 0.95, 0.99, 0.995), 
                mult_sc = TRUE)
@@ -165,7 +168,7 @@ QSI <- meanQS %>% pivot_wider( names_from = estimator, values_from = MQS) %>%
 QSI
 ```
 
-```{r, fig.width=10cm}
+```{r, fig.width=6}
 QSI %>% 
   ggplot() +
     geom_tile(aes(fill = QSI,
