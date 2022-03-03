@@ -4,7 +4,7 @@
 \alias{compute_conc_bm_id}
 \title{#' Compute concatenated block maxima}
 \usage{
-compute_conc_bm_id(agg_df, nlo = 3, resolution = "hourly")
+compute_conc_bm_id(agg_df, nlo = 3, resolution = "hourly", seasonlength = 365)
 }
 \arguments{
 \item{agg_df}{Dataframe with values of intensity duration process; output of
@@ -13,6 +13,9 @@ function 'fun_aggregate2df'}
 \item{nlo}{number of Indices (years/seasons ...) that make up the test set}
 
 \item{resolution}{Resolution of the data}
+
+\item{seasonlength}{The length of the season of the input data. E.g., if observations
+are from the whole year, it is 365; if observations are from JJA only, it is 92.}
 }
 \value{
 A tibble with

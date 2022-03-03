@@ -4,7 +4,7 @@
 \alias{fun_aggregate2df}
 \title{Compute intensity duration process and block maxima for several durations $d$}
 \usage{
-fun_aggregate2df(data, ds, resolution = "hourly")
+fun_aggregate2df(data, ds, resolution = "hourly", seasonlength = 365)
 }
 \arguments{
 \item{data}{a data frame or tibble of precipitation data, with a column named
@@ -18,6 +18,9 @@ For each $d$, the intensity process is computed, which is the moving average ove
 of precipitation, computed within distinct years.}
 
 \item{resolution}{The resolution of the data, must be one of "hourly" or "daily"}
+
+\item{seasonlength}{The length of the season of the input data. E.g., if observations
+are from the whole year, it is 365; if observations are from JJA only, it is 92.}
 }
 \value{
 returns a tibble with colums

@@ -4,7 +4,7 @@
 \alias{fun_aggregate}
 \title{Compute Intensity duration process and yearly block maxima for one duration $d$}
 \usage{
-fun_aggregate(data, d, resolution = "hourly")
+fun_aggregate(data, d, resolution = "hourly", seasonlength = 365)
 }
 \arguments{
 \item{data}{a data frame or tibble of precipitation data, with a column named
@@ -18,6 +18,9 @@ It is the number $d$ of observations over which the the moving average
 of precipitation is computed, computed within distinct years.}
 
 \item{resolution}{The resolution of the data, must be one of "hourly" or "daily"}
+
+\item{seasonlength}{The length of the season of the input data. E.g., if observations
+are from the whole year, it is 365; if observations are from JJA only, it is 92.}
 }
 \value{
 returns a tibble with colum

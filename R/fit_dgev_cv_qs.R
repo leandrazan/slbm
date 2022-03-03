@@ -86,7 +86,7 @@ fit_dgev_cv_qs <- function(agg_bm, conc_bm, ds,
         tryCatch(
           dgev_cv_fit(agg_bm = agg_bm, conc_bm = conc_bm, leave_out = .x, ds =  ds,
                  quants = quants, mult_sc = mult_sc, dur_offset = dur_offset,
-                 int_offset = int_offset, optimMethod = optimMethod, Maxit = Maxit, ... ) ,
+                 int_offset = int_offset, optimMethod = optimMethod, Maxit = Maxit, ... )  ,
           error = function(egal){
             tibble::tibble( mut = NA, sigma0 = NA, shape = NA,
                                          eta = NA,

@@ -4,7 +4,7 @@
 \alias{get_agg_bm}
 \title{Compute disjoint and sliding block maxima sample of ID process}
 \usage{
-get_agg_bm(data, ds, resolution = "hourly")
+get_agg_bm(data, ds, resolution = "hourly", seasonlength = 365)
 }
 \arguments{
 \item{data}{a data frame or tibble of precipitation data, with a column named
@@ -17,6 +17,9 @@ get_agg_bm(data, ds, resolution = "hourly")
 maxima}
 
 \item{resolution}{the resolution of the observed data}
+
+\item{seasonlength}{The length of the season of the input data. E.g., if observations
+are from the whole year, it is 365; if observations are from JJA only, it is 92.}
 }
 \value{
 a tibble with columns duration, blcksz (the blocksize for the sliding block maxima sample,

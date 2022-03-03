@@ -8,7 +8,8 @@
 #' of precipitation, computed within distinct years.
 #'
 #' @param resolution The resolution of the data, must be one of "hourly" or "daily"
-#'
+#' @param seasonlength The length of the season of the input data. E.g., if observations
+#' are from the whole year, it is 365; if observations are from JJA only, it is 92.
 #' @return returns a tibble with colums
 #' * aggs: list of tibbles of aggregated observations, Year they belong to and the duration d.
 #' One tibble for each duration $d$
@@ -22,9 +23,10 @@
 #' ExampleData <- data.frame(datetime = dates, prec = prec)
 #'
 #' fun_aggregate2df(ExampleData, ds = c(1,2,4,8,16, 24, 48))
-fun_aggregate2df <- function(data, ds, resolution = "hourly"){
+fun_aggregate2df <- function(data, ds, resolution = "hourly", seasonlength = 365){
   purrr::map_dfr(ds, .f = function(ds){ return( fun_aggregate(data = data, d = ds,
-                                                              resolution = resolution))}) %>%
+                                                              resolution = resolution,
+                                                              seasonlength = seasonlength))}) %>%
     dplyr::bind_cols(duration = ds)
 
 }

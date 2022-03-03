@@ -88,7 +88,8 @@ dgev_cv_fit <- function(agg_bm, conc_bm, leave_out , ds, quants, mult_sc = FALSE
 
 
   fitb <- gev.d.fit.sl(agg_bm = agg_bm, mult_sc = mult_sc,
-                                 dur_offset = dur_offset, int_offset = int_offset, method = optimMethod,
+                                 dur_offset = dur_offset, int_offset = int_offset,
+                       optimMethod = optimMethod,
                        Maxit = Maxit, ...)
 
   mlest <- dplyr::bind_cols(fitb$mle, conv =  fitb$conv)
