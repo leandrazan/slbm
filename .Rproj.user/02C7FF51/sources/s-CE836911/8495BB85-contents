@@ -41,6 +41,7 @@
 cv_fit_eff <- function(djbm, slbm, conc_bm, leave_out ,
                        quants = 1-1/c(2,5,10, 20, 50, 100, 200 ), method = "both",
                        fixpar = NULL ){
+  
   bm_test <- djbm %>% dplyr::filter(Index %in% leave_out)
 
   dj_train <- djbm  %>% dplyr::filter(!(Index %in% leave_out))

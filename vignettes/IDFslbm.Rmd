@@ -2,7 +2,7 @@
 title: "Fit IDF model based on sliding BM"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{IDFsBM}
+  %\VignetteIndexEntry{IDFslbm}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,14 +15,14 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, warning=FALSE, message=FALSE}
-library(IDFsl)
+library(slbm)
 library(tidyr)
 library(dplyr)
 library(purrr)
 library(ggplot2)
 ```
 
-This vignette explains how to use the functions provided in the `fitSBM` package
+This vignette explains how to use the functions provided in the `slbm` package
 for fitting IDF (Intensity-Duration-Frequency) models to data based on sliding 
 block maxima. 
 
@@ -33,7 +33,7 @@ provided by the DWD.
 We load it by running `data("precEssen")` as it is an example data set in this package.
 
 ```{r}
-data("precEssen", package = "IDFsl")
+data("precEssen", package = "slbm")
 
 head(precEssen)
 ```

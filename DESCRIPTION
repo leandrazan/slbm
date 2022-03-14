@@ -5,7 +5,9 @@ Version: 0.1.0
 Author: Leandra Zanger
 Maintainer: The package maintainer <Leandra.Zanger@uni-duesseldorf.de>
 Description: This package allows to fit Extreme Value Distributions based on 
-sliding block maxima. Several Models can be fitted: univariate time series, Intensity Duration Frequency models and Spatial Models.
+    sliding block maxima. Several Models can be fitted, including univariate time 
+    series (possibly non-stationary), Intensity Duration Frequency models and 
+    Spatial models.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
