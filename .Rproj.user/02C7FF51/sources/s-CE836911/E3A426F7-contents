@@ -1,5 +1,0 @@
-devtools::load_all()
-
-usethis::use_package("tidyr")
-
-R.version
