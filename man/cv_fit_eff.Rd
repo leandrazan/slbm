@@ -58,7 +58,8 @@ efficiently evaluate estimates based on the quantile score of a subset of the da
 \examples{
 df <- data.frame(obs = evd::rgpd(30*50), Index = rep(1:50, each = 30))
 cv_fit_eff(data.frame( obs = blockmax(df$obs, r = 30, "disjoint"),  Index = 1:50),
-data.frame( sldata = blockmax(df$obs, r = 30, "sliding"), Index = rep(1:50, each = 30)[1:(49*30 +1)]),
+data.frame( sldata = blockmax(df$obs, r = 30, "sliding"),
+Index = rep(1:50, each = 30)[1:(49*30 +1)]),
 conc_bm = compute_conc_bm(df, nlo = 3, blcksz = 30), leave_out = c(4, 35, 42))
 
 }

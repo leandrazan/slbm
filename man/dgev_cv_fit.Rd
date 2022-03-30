@@ -19,7 +19,7 @@ dgev_cv_fit(
 )
 }
 \arguments{
-\item{agg_bm}{Tibble as obtained from the output of \code{\link[=get_agg_bm()]{get_agg_bm()()}}.}
+\item{agg_bm}{Tibble as obtained from the output of \code{\link[=get_agg_bm]{get_agg_bm()}}.}
 
 \item{conc_bm}{Tibble of sliding block maxima for all possible combinations of
 years/seasons that are consecutive after removing observations from a year/season
@@ -64,8 +64,8 @@ example_data <- data.frame(datetime = dates, prec = prec)
 
 agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
 agdf <- fun_aggregate2df( example_data, ds = c(1,2,4,8,16, 24, 48) )
-concbm <- compute_conc_bm_id(agdf)
-dgev_cv_fit(agbm, concbm, ds = c(1,2) , leave_out = c(2004, 2008, 2017),
+concbm <- compute_conc_bm_id(agdf, nlo = 3, testset = "consec")
+dgev_cv_fit(agbm, concbm, ds = c(1,2) , leave_out = c(2003, 2004, 2005),
  quants = c(.5, .9, .99) )
 
 }

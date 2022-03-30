@@ -1,6 +1,6 @@
 #' d-GEV parameter estimation and quantile score evaluation on a test set
 #'
-#' @param agg_bm Tibble as obtained from the output of [get_agg_bm()()].
+#' @param agg_bm Tibble as obtained from the output of [get_agg_bm()].
 #' @param conc_bm Tibble of sliding block maxima for all possible combinations of
 #' years/seasons that are consecutive after removing observations from a year/season
 #' for the test set

@@ -96,31 +96,6 @@ nll_spat <- function(params, loc.sp.form, scale.sp.form,
   return(likh)
 }
 
-get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
-
-  # if temporal covariate is used
-  if(!is.null(temp_cvrt)) {
-    data %>% dplyr::group_by(Station) %>%
-      tidyr::nest() %>%
-      dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
-        bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
-        bmx <- data.frame(slbm = bmx, temp_cvrt = temp_cvrt)
-        bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
-          dplyr::summarise(n  = n(), .groups = "drop") } )) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(-data)
-  } else {
-  data %>% dplyr::group_by(Station) %>%
-    tidyr::nest() %>%
-    dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
-      bmx <- blockmax(.x$Obs, r =blcksz, "sliding")
-      bmx <- data.frame(slbm = bmx)
-      bmx %>%  dplyr::group_by(slbm) %>%
-        dplyr::summarise(n  = n()) } )) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(-data)
-  }
-}
 
 #yyuniq <- get_uniq_bm(yy, blcksz = 90)
 
@@ -215,58 +190,13 @@ log_dens <- function(obs, weight,  loc_temp, loc_sp, scale_temp, scale_sp, shape
 }
 
 
-## maybe return MatLocTemp and MatScaleTemp as lists, not as part of tibble
-prep4spatml <- function(loc.sp.form, scale.sp.form,
-                        loc.temp.form = NULL, scale.temp.form = NULL,
-                        data, spat.cov) {
-
-  model.loc.sp <- model.matrix(loc.sp.form, model.frame(loc.sp.form,
-                                                        data = spat.cov, na.action = na.pass))
-
-  model.scale.sp <- model.matrix(scale.sp.form, model.frame(scale.sp.form,
-                                                            data = spat.cov, na.action = na.pass))
-
-
-  if(!is.null(loc.temp.form)) {
-    loc.temp.form <- update(loc.temp.form,  ~ . + 0)
-
-    data <- data %>%
-      dplyr::mutate(MatLocTemp =  purrr::map(uniq_data, function(.x){
-         model.matrix(loc.temp.form,
-                                 model.frame(loc.temp.form,
-                                             data = data.frame(GMST = .x$temp_cvrt),
-                                             na.action = na.pass))
-
-      }
-      ))
-
-  }
-
-  if(!is.null(scale.temp.form)) {
-    scale.temp.form <- update(scale.temp.form,  ~ . + 0)
-
-    data <- data %>%
-      dplyr::mutate(MatScaleTemp =  purrr::map(uniq_data, function(.x){
-        model.matrix(scale.temp.form,
-                                 model.frame(scale.temp.form,
-                                             data = data.frame(GMST = .x$temp_cvrt),
-                                             na.action = na.pass))
-
-      }
-      ))
-  }
-
-
-
-  list( data = data, MatLocSp = model.loc.sp, MatScaleSp = model.scale.sp)
-}
 
 
 
 # use link function for scale parameter: to be completed
 nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
                              loc.temp.form = NULL, scale.temp.form = NULL,
-                             dataprep, spat.cov, hom = FALSE, scale.link = make.link("log")){
+                             dataprep, spat.cov, scale.link = make.link("log")){
 
 
   params.sp <- list(loc = params[startsWith(names(params),"loc")],
@@ -363,97 +293,89 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 
 }
 
-nll_spat_temp_sl <- function(params, loc.sp.form, scale.sp.form,
-                        loc.temp.form = NULL, scale.temp.form = NULL,
-                        data, spat.cov, temp.cov = NULL, hom = FALSE ){
+# only formulas for scale are given; location is const*scale
+nll_spat_temp_sl_hom <- function(params, scale.sp.form,
+                                  scale.temp.form = NULL,
+                                  dataprep, spat.cov, scale.link = make.link("log")){
 
 
-  n.site <- nrow(data)
-  n.spat <- nrow(spat.cov)
-
-  params.sp <- list(loc = params[startsWith(names(params),"loc")],
+  params.sp <- list(disp = params[startsWith(names(params),"disp")],
                     scale = params[startsWith(names(params),"scale")],
                     shape = params[startsWith(names(params),"shape")])
 
-  params.temp <- list(loc = params[startsWith(names(params),"tempLoc")],
-                       scale = params[startsWith(names(params),"tempScale")])
+  params.temp <- list(scale = params[startsWith(names(params),"tempScale")])
 
   params.temp <- purrr::map(params.temp, function(.x) ifelse(length(.x) == 0, 0, .x) )
 
-  model.loc.sp <- model.matrix(loc.sp.form, model.frame(loc.sp.form,
-                                                        data = spat.cov, na.action = na.pass))
+  model.scale.sp <- dataprep$MatScaleSp
 
-  model.scale.sp <- model.matrix(scale.sp.form, model.frame(scale.sp.form,
-                                                            data = spat.cov, na.action = na.pass))
+  #  oc_sp <- data.frame(loc_sp = model.loc.sp %*% params.sp$loc)
+
+  scale_sp <-  data.frame(scale_sp = model.scale.sp %*% params.sp$scale)
+
+  loc_sp <- params.sp$disp*scale_sp
+  names(loc_sp) <- "loc_sp"
+  dataprep <- dataprep$data
+
+  dataprep <- dataprep %>% dplyr::bind_cols( loc_sp, scale_sp )
 
 
-  if(!is.null(loc.temp.form)) {
-    loc.temp.form <- update(loc.temp.form,  ~ . + 0)
-
-    data <- data %>%
-      dplyr::mutate(uniq_data =  purrr::map(uniq_data, function(.x){
-        modelmat <- model.matrix(loc.temp.form,
-                                 model.frame(loc.temp.form,
-                                             data = data.frame(GMST = .x$temp_cvrt),
-                                             na.action = na.pass))
-        loc_param_temp <- as.numeric(modelmat %*% params.temp$loc)
-
-        .x %>% bind_cols(loc_temp = loc_param_temp)
-
-      }
-      ))
-
-  }
 
   if(!is.null(scale.temp.form)) {
     scale.temp.form <- update(scale.temp.form,  ~ . + 0)
 
-    data <- data %>%
-      dplyr::mutate(uniq_data =  purrr::map(uniq_data, function(.x){
-        modelmat <- model.matrix(scale.temp.form,
-                                 model.frame(scale.temp.form,
-                                             data = data.frame(GMST = .x$temp_cvrt),
-                                                            na.action = na.pass))
-        scale_param_temp <- modelmat %*% params.temp$scale
+    dataprep <- dataprep %>%
+      dplyr::mutate(ScaleTemp =  purrr::map(MatScaleTemp,
+                                            ~ as.numeric( .x %*% params.temp$scale) )
+      ) %>%
+      dplyr::select( - MatScaleTemp)
 
-        .x %>% bind_cols(scale_temp = scale_param_temp)
-
-      }
-      ))
-    }
-
-  loc_sp <- data.frame(loc_sp = model.loc.sp %*% params.sp$loc)
+    scalepars <- purrr::map2(.x = dataprep$ScaleTemp, .y = dataprep$scale_sp, ~ .x + .y)
 
 
-  scale_sp <-  data.frame(scale_sp = model.scale.sp %*% params.sp$scale)
+  } else {
+    scalepars <- dataprep$scale_sp
+  }
 
-  data <- data %>% dplyr::bind_cols( loc_sp , scale_sp )
+  yy <- purrr::map(dataprep$uniq_data, ~ .x$slbm)
 
-
-  data <-  data %>%
-    dplyr::mutate( nllh_val = purrr::pmap(list(.ud = uniq_data, .locsp = loc_sp,
-                                               .scalesp = scale_sp, .shape = params.sp$shape),
-                                          .f = function(.ud, .locsp, .scalesp, .shape) {
-                                            tempcv <- colnames(.ud)
-
-                                            .loc_temp <- ifelse( "loc_temp" %in% tempcv,
-                                                                .ud$loc_temp, 0)
-                                            .scale_temp <- ifelse( "scale_temp" %in% tempcv,
-                                                                .ud$scale_temp, 0)
-
-                                            log_dens(obs = .ud$slbm, weight = .ud$n,
-                                                     loc_temp = .loc_temp,
-                                                     loc_sp = .locsp,
-                                                     scale_temp = .scale_temp,
-                                                     scale_sp = .scalesp,
-                                                     shape = .shape)
-                                          } ) )
+  link.scalepars <- scale.link$linkinv(scalepars)
 
 
 
- sum(unlist(data$nllh_val))
+  if(abs(params.sp$shape ) < 1e-8) {
+    yy <-  purrr::pmap(list(.x = yy, .z = link.scalepars),
+                       function(.x,  .z) {
+                         exp(- (.x /.z -  params.sp$disp))
+                       } )
+  } else {
+    yy <- purrr::pmap(list(.x = yy, .z = link.scalepars),
+                      function(.x, .z) {
+                        (1 + params.sp$shape*( .x /.z -  params.sp$disp))^(-1/params.sp$shape)
+                      })
+  }
+
+  stopyn <- (any(unlist(purrr::map(yy, ~ any(.x < 0, na.rm = TRUE)))) | any(unlist(link.scalepars )<= 0) )
+  if(stopyn) {
+    return( 1e+10 )
+  } else {
+
+    yy <- purrr::pmap( list(.x = yy, .y = link.scalepars , .z = dataprep$uniq_data),
+                       .f = function(.x, .y, .z) {
+                         u <- (log(.y) - (params.sp$shape +1)*log(.x) + .x)
+                         u*.z$n
+                       }
+
+    )
+
+    sum(unlist(yy))
+  }
+
+
+
 
 }
+
 nll_spat_IF <- function(params ,scale.sp.form,
                         scale.temp.form = NULL,
                         data, spat.cov, temp.cov = NULL){
@@ -478,7 +400,7 @@ nll_spat_IF <- function(params ,scale.sp.form,
 
   if( !is.null(scale.temp.form)){
     scale.temp.form <- update(scale.temp.form,  ~ . + 0)
-    scale.temp.form <- update(scale.temp.form,  ~ . + 0)
+
     model.scale.temp <- model.matrix(scale.temp.form, model.frame(scale.temp.form,
                                                                   data =  data.frame(temp.cov), na.action = na.pass))
   }
@@ -500,9 +422,10 @@ nll_spat_IF <- function(params ,scale.sp.form,
   else{
     yy <- 1+ params.sp$shape*(data/exp(param.scale) - params.sp$disp)
 
-    likh <- sum(param.scale  + (1/params.sp$shape +1)*log(yy) + yy^(-1/params.sp$shape),
-                na.rm = TRUE)
-    if(any(yy <0, na.rm = TRUE)){ likh <- 1e+10}
+    if(any(yy <0, na.rm = TRUE)){ likh <- 1e+10} else {
+      likh <- sum(param.scale  + (1/params.sp$shape +1)*log(yy) + yy^(-1/params.sp$shape),
+                  na.rm = TRUE)
+    }
   }
 
   return(likh)
@@ -874,11 +797,11 @@ gr_spat_gev_sl <- function(params, loc.sp.form , scale.sp.form,
 # log(sigma(s)) = sigma_0 + sigma_1*cvrt1 + sigma_2*scrt2 + ...
 
 # ... contains arguments for starting values under IF assumption
-get_start_vals <- function(data, loc.sp.form = NULL, scale.sp.form,
+get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
                            loc.temp.form = NULL, scale.temp.form = NULL,
-                           spat.cov, temp.cov = NULL, method = "fgev",
-                           start_methIF = "fgev",
-                           print_start_vals = TRUE, scale.link = make.link("log"), ...){
+                           spat.cov, temp.cov = NULL, method = "LeastSq",
+                           print_start_vals = TRUE, scale.link = make.link("log"),
+                           ...){
 
   if( !(method %in% c("LeastSq", "LeastSqTemp", "spatialGev", "fgevMean"))) {
     stop("This is not a valid method for computing starting values.")
@@ -897,13 +820,15 @@ get_start_vals <- function(data, loc.sp.form = NULL, scale.sp.form,
   if(method == "LeastSq") {
 
     if(exists("type", where = IFargs) & !is.null(IFargs$type)) {
-      YY <- fgev_hom(data, start_meth = start_methIF, method = "BFGS")$mle
 
-      .datfr <- data.frame(t(YY)) %>% bind_cols(spat.cov)
+      #browser()
+      YY <- fgev_hom(data, method = "BFGS", scale.link = scale.link)$mle
 
-      lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), "log(scale)"  )
+      .datfr <- data.frame(t(YY)) %>% dplyr::bind_cols(spat.cov)
 
-      st_disp <- mean(.datfr$disp)
+      lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), paste0(scale.link$name, "(scale)"))
+
+      st_disp <- mean(.datfr$loc/.datfr$scale)
       names(st_disp) <- "disp"
       st_sigmas <- lm(lm.sigma, data = .datfr)$coefficients
       names(st_sigmas) <-  paste0("scale", 0:(length(st_sigmas)-1))
@@ -1287,9 +1212,10 @@ fit_spgev_IF <- function(data,  scale.sp.form,
 
 ## ... can be the following arguments: maxit or similar for optim,
 ## temp.cov for computing starting values with SpatialExtremes when depending on temporal cov.
+#  type = IF for homogeneity assumption
 fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                       loc.temp.form = NULL, scale.temp.form = NULL,
-                      spat.cov, start_vals = NULL, datastart = NULL, use_gr = TRUE,
+                      spat.cov, start_vals = NULL, datastart = NULL, use_gr = FALSE,
                       method = "BFGS", st_val_meth = "LeastSq", print_start_vals = TRUE,
                       scale.link = make.link("log"), ...){
 
@@ -1305,18 +1231,6 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
   if (is.null(start_vals) & is.null(datastart)) {
     stop("Please provide either starting values or a dataset where starting values can
          be computed on.")
-    # dataunnest <- (data %>% tidyr::unnest(cols = uniq_data))
-    # datastart <- dataunnest %>%
-    #   dplyr::select(Station, slbm) %>% unique() %>% tibble::rowid_to_column() %>%
-    #   tidyr::pivot_wider(names_from = Station, values_from = slbm)
-    #
-    # dataunnest$slbm # %>% unique()
-    # if(!is.null(loc.temp.form) | !is.null(scale.temp.form)) {
-    #   add.args$temp.cov <- dataunnest$temp_cvrt
-    #   names(add.args$temp.cov) <- ifelse(!is.null(loc.temp.form),
-    #                                      all.vars(loc.temp.form),
-    #                                      all.vars(scale.temp.form))
-    # }
   }
 
   dataprep <- prep4spatml(loc.sp.form = loc.sp.form, scale.sp.form = scale.sp.form,
@@ -1337,7 +1251,7 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                                   method = st_val_meth,
                                   print_start_vals = print_start_vals,
                                   scale.link = scale.link,
-                                  type = add.args$IF)
+                                  type = add.args$type)
 
     add.args <- add.args[!(names(add.args) == "temp.cov")]
 
@@ -1350,6 +1264,16 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                    scale.sp.form = scale.sp.form,
                    loc.temp.form = loc.temp.form, scale.temp.form = scale.temp.form,
                    data = data, spat.cov = spat.cov, temp.cov = temp.cov,
+                   method = method, control = add.args)
+  }
+  if(exists("type", where = add.args)) {
+
+    add.args <- add.args[!(names(add.args) == "type")]
+    mlest <- optim(start_vals, fn = nll_spat_temp_sl_hom,
+                   scale.sp.form = scale.sp.form,
+                   scale.temp.form = scale.temp.form,
+                   dataprep = dataprep, spat.cov = spat.cov,
+                   scale.link = scale.link,
                    method = method, control = add.args)
   }
   else{

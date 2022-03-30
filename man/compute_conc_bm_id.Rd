@@ -2,9 +2,15 @@
 % Please edit documentation in R/compute_conc_bm_id.R
 \name{compute_conc_bm_id}
 \alias{compute_conc_bm_id}
-\title{#' Compute concatenated block maxima}
+\title{Compute concatenated block maxima}
 \usage{
-compute_conc_bm_id(agg_df, nlo = 3, resolution = "hourly", seasonlength = 365)
+compute_conc_bm_id(
+  agg_df,
+  nlo = 3,
+  resolution = "hourly",
+  seasonlength = 365,
+  testset = "consec"
+)
 }
 \arguments{
 \item{agg_df}{Dataframe with values of intensity duration process; output of
@@ -16,17 +22,35 @@ function 'fun_aggregate2df'}
 
 \item{seasonlength}{The length of the season of the input data. E.g., if observations
 are from the whole year, it is 365; if observations are from JJA only, it is 92.}
+
+\item{testset}{Whether to compute only those concatenated block maxima that are
+needed when cross-validation sets are obtained by dividing the data into disjoint
+subsets of consecutive years. Defaults to "consec" (which is this reduced setting),
+anything else computes block maxima for all possibilities of first and second year.}
 }
 \value{
 A tibble with
 \itemize{
-\item conc_slbm: sliding block maxima as obtained when observations with the i
+\item ind1: The year from which
+\item newslbm: sliding block maxima as obtained when observations with the i
 }
 }
 \description{
 Compute sliding block maxima of the intensity duration process
-for all possible compositions of years
-arising from cross validation with test set of size given in 'nlo'
+for all possible compositions of two consecutive years after removing observations
+from a testset.
+
+For performing cross-validation, one splits the data into several test and a training
+data sets. In the sliding block case, one cannot only remove the observations with
+an index belonging to the test set, because the sliding blocks 'look into the future',
+which means that a sliding block starting in year 2 also looks at observations from
+year 3 (if it's not the block corresponding to the disjoint block).
+Because it takes quite long to remove the data of the years that are chosen as
+test set from the original data and then computing sliding block maxima, this
+functions computes the sliding block maxima of only those years that can be consecutive
+after removing observations belonging to a testset. E.g., when the testset consists of
+years 2002, 2003, 2004 and we have data from 2000 to 2010, we only need to compute
+sliding block maxima of the concatenated series with data from 2002 and 2005.
 }
 \examples{
 dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
@@ -35,6 +59,6 @@ prec <- rgamma(length(dates), shape = 0.1)
 ExampleData <- data.frame(datetime = dates, prec = prec)
 
 aggdat <-  fun_aggregate2df(ExampleData, ds = c(1,5,8))
-compute_conc_bm_id(aggdat, nlo = 2)
+compute_conc_bm_id(aggdat, nlo = 2, testset = "consec")
 
 }
