@@ -42,6 +42,9 @@ the assumption of constant dispersion (location/scale) parameter.
 data("ExampleData")
 yy <- data.frame(ExampleData) \%>\%
       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
+set.seed(3)
+spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+   lon = runif(8), ele = runif(8))
 ##############################
 bms <- get_uniq_bm(yy, 90)
 prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,

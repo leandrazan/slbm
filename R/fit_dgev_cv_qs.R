@@ -47,11 +47,11 @@
 #' example_data <- data.frame(datetime = dates, prec = prec)
 #'
 #' agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
-#' agdf <- fun_aggregate2df( example_data, ds = c(1,2,4,8,16, 24, 48) )
+#' agdf <- fun_aggregate2df(example_data, ds = c(1,2,4,8,16, 24, 48))
 #' concbm <- compute_conc_bm_id(agdf, testset = "consec")
 #' cvres <- fit_dgev_cv_qs(agbm, concbm,  ds = c(1,4,8, 24))
 #' # compute mean quantile scores based on cross-validation:
-#' cvres %>% dplyr::select( - c( mut, sigma0, shape, eta, conv, Testdata )) %>%
+#' cvres %>% dplyr::select( - c(mut, sigma0, shape, eta, conv, Testdata)) %>%
 #'           dplyr::group_by(ds, ps, estimator) %>%
 #'           dplyr::summarise(MQS = mean(quant_score), .groups = "drop")
 fit_dgev_cv_qs <- function(agg_bm, conc_bm, ds,
@@ -68,7 +68,7 @@ fit_dgev_cv_qs <- function(agg_bm, conc_bm, ds,
     cvstart <- seq(years_obs[1], years_obs[n.years], n.lo)
     sbst <- purrr::map(cvstart, ~ .x + (0:(n.lo -1)))
     sbst[[length(sbst)]] <-  sbst[[length(sbst)]][ sbst[[length(sbst)]] <= years_obs[n.years]]
-    sbst <- sbst[map(sbst, ~ length(.x)) == n.lo]
+    sbst <- sbst[purrr::map(sbst, ~ length(.x)) == n.lo]
 
     n.cv <- length(sbst)
   } else if( testset == "random") {

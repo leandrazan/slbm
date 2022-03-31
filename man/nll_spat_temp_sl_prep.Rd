@@ -50,6 +50,9 @@ data("GMST")
 tempcv <- GMST \%>\% dplyr::filter(Year \%in\% c(1980:2019))
 tempcv <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
 tempcv <- data.frame(GMST = tempcv)
+set.seed(3)
+spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+   lon = runif(8), ele = runif(8))
 yy <- data.frame(ExampleData) \%>\%
       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
 ##############################
@@ -64,5 +67,4 @@ params  <- c("loc0" = 100, "loc1" = -10, "loc2" = 4, "loc3" = -40, "scale0" = 12
 nll_spat_temp_sl_prep(params = params, loc.sp.form = ~ lon + lat + ele,
           scale.sp.form = ~ lon + lat + ele, loc.temp.form = ~ GMST,
           dataprep = prepdata, spat.cov = spatial_cvrt)
-
 }

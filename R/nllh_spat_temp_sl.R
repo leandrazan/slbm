@@ -27,6 +27,9 @@
 #' tempcv <- GMST %>% dplyr::filter(Year %in% c(1980:2019))
 #' tempcv <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
 #' tempcv <- data.frame(GMST = tempcv)
+#' set.seed(3)
+#' spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+#'    lon = runif(8), ele = runif(8))
 #' yy <- data.frame(ExampleData) %>%
 #'       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
 #' ##############################
@@ -41,6 +44,7 @@
 #' nll_spat_temp_sl_prep(params = params, loc.sp.form = ~ lon + lat + ele,
 #'           scale.sp.form = ~ lon + lat + ele, loc.temp.form = ~ GMST,
 #'           dataprep = prepdata, spat.cov = spatial_cvrt)
+#' @importFrom stats lm model.frame model.matrix na.pass reformulate update
 #'
 nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
                                   loc.temp.form = NULL, scale.temp.form = NULL,
@@ -157,6 +161,9 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 #' data("ExampleData")
 #' yy <- data.frame(ExampleData) %>%
 #'       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
+#' set.seed(3)
+#' spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+#'    lon = runif(8), ele = runif(8))
 #' ##############################
 #' bms <- get_uniq_bm(yy, 90)
 #' prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,

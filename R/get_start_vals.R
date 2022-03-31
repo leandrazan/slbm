@@ -23,15 +23,16 @@
 #'
 #' @examples
 #' data("ExampleData")
+#' data("GMST")
 #' djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
 #'
 #' set.seed(3)
-#' spatial_cvrt <- data.frame(lat  = seq(0, dstat, length = dstat),
+#' spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
 #'    lon = runif(8), ele = runif(8))
-#'
-#' get_start_vals(djbm, loc.sp.form = ~ lon + lat + ele, scale.sp.form = ~ lon + lat,
-#' spat.cov = spatial_cvrt, method = "LeastSq")
-#'
+#' tempcov <- GMST$smoothedGMST[101:140]
+#' get_start_vals(djbm, loc.sp.form = ~ lon + lat, scale.sp.form = ~ lon + lat,
+#' loc.temp.form = ~ GMST, scale.link = make.link("identity"),
+#' spat.cov = spatial_cvrt, temp.cov = tempcov, method = "spatialGev")
 #'
 get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
                            loc.temp.form = NULL, scale.temp.form = NULL,
@@ -132,7 +133,7 @@ get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
   # (one covariate only)
   if(method == "LeastSqTemp") {
 
-    if(is.null(temp.cov) | !(nrow(temp.cov) == nrow(data))) {
+    if(is.null(temp.cov) | !(length(temp.cov) == nrow(data))) {
       stop("Please provide a temporal covariate of the same length as the data.")
     }
 
@@ -186,6 +187,10 @@ get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
                                                   scale.form = scale.sp.form,
                                                   shape.form = ~ 1)$fitted.values
     } else {
+      temp.cov <- as.matrix(temp.cov)
+      if(is.null(colnames(temp.cov))) {
+        colnames(temp.cov) <- all.vars(loc.temp.form)
+      }
 
       start_params <- SpatialExtremes::fitspatgev(data = data,
                                                   covariables = as.matrix(spat.cov),
@@ -264,3 +269,5 @@ get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
   start_vals
 
 }
+
+

@@ -16,7 +16,7 @@
 #' dstat <- 8      # number of stations
 #' x <- seq(0, dstat, length = dstat)  # latitude
 #' y <- runif(dstat)                   # longitude
-#' spatial_cvrt <- data.frame(lat  = x, lon = y, ele = runif(dstat)) # spatial covariate s
+#' spatial_cvrt <- data.frame(lat  = x, lon = y, ele = runif(dstat)) # spatial covariates
 #' ## smoothed GMST anomaly covariate
 #' data("GMST")
 #' GMST1 <- GMST %>% dplyr::filter(Year %in% 1980:2019)
@@ -42,6 +42,7 @@
 #'  }
 #' }
 #'}
+#'
 "ExampleData"
 
 
