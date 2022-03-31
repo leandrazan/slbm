@@ -37,7 +37,7 @@
 #' @return Tibble containing the estimated parameters, the estimation method, the
 #' estimated quantiles, the test set as well as the corresponding quantile scores for every
 #' cross-validation test set.
-#' @example
+#' @examples
 #' df <- data.frame(obs = evd::rgpd(30*50), Index = rep(1:50, each = 30))
 #' concbm <- compute_conc_bm(df, nlo = 3, blcksz = 30)
 #' djbm <- data.frame( obs = blockmax(df$obs, r = 30, "disjoint"),  Index = 1:50)
@@ -46,12 +46,10 @@
 #' cvfits <- fit_gev_cv_qs(djbm = djbm, slbm = slbm, conc_bm = concbm, testset = "consec" ,
 #' quants = 1-1/c(2,5,10, 20, 50, 100, 200 ), n.cv = NULL,
 #' fixpar = NULL )
-#'
 #' # Now you can compute the mean quantile scores of the cross-validated values:
 #' cvfits %>% dplyr::select(-c(djdat, est.quants)) %>%
 #' dplyr::group_by(estimator, ps) %>%
 #' dplyr::summarise( MeanQS = mean(quant_score),  .groups = "drop")
-
 #'
 fit_gev_cv_qs <- function(djbm, slbm, conc_bm, method = "both", testset = "consec" ,
                        quants = 1-1/c(2,5,10, 20, 50, 100, 200 ),n.lo = 3,  n.cv = NULL,

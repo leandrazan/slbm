@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-nllh.sl.d <- function( parvec, bm_uni, sigma0link = make.link("log"), mult_sc = TRUE,
+nllh.sl.d <- function(parvec, bm_uni, sigma0link = make.link("log"), mult_sc = TRUE,
                                   dur_offset = FALSE , int_offset = FALSE){
 
   mut <- parvec[["mut"]]

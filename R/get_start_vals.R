@@ -1,0 +1,266 @@
+#' Compute initial values for ML fitting
+#'
+#' @param data The data matrix from which initial GEV parameters are estimated.
+#' @param loc.sp.form R formula definining the spatial model for the location parameter.
+#' @param scale.sp.form R formula definining the spatial model for the scale parameter.
+#' @param loc.temp.form R formula definining the temporal trend for the location parameter.
+#' @param scale.temp.form R formula definining the temporal trend for the scale parameter.
+#' @param spat.cov A data frame containing the spatial covariates used in the formulations
+#' of the spatial formulas.
+#' @param temp.cov A named matrix containing the temporal covariates used in the formulations
+#' of the temporal formulas.
+#' @param method The method used for computing initial values: One of "LeastSq",
+#' "LeastSqTemp", "spatialGev", "fgevMean". See details for more information.
+#'
+#' @param print_start_vals Logical; whether to print the initial parameters to the console.
+#' @param scale.link The link function that is used for modelling the scale parameter.
+#' @param ... Further agruments that can be passed. Atm, the only supported further
+#' argument is \code{type = "IF"} for computing initial values under homogeneity
+#' constraint (Indexflood assumption).
+#'
+#' @return A vector containing a set of initial parameter values.
+#' @export
+#'
+#' @examples
+#' data("ExampleData")
+#' djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
+#'
+#' set.seed(3)
+#' spatial_cvrt <- data.frame(lat  = seq(0, dstat, length = dstat),
+#'    lon = runif(8), ele = runif(8))
+#'
+#' get_start_vals(djbm, loc.sp.form = ~ lon + lat + ele, scale.sp.form = ~ lon + lat,
+#' spat.cov = spatial_cvrt, method = "LeastSq")
+#'
+#'
+get_start_vals <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
+                           loc.temp.form = NULL, scale.temp.form = NULL,
+                           spat.cov, temp.cov = NULL, method = "LeastSq",
+                           print_start_vals = TRUE, scale.link = make.link("log"),
+                           ...){
+  if(!is.matrix(data)) {data <- as.matrix(data)}
+
+  if( !(method %in% c("LeastSq", "LeastSqTemp", "spatialGev", "fgevMean"))) {
+    stop("This is not a valid method for computing starting values.")
+  }
+
+  n.loc.temp <- length(all.vars(loc.temp.form))
+  n.scale.temp <- length(all.vars(scale.temp.form))
+  n.loc.sp <- length(all.vars(loc.sp.form)) + 1
+  n.scale.sp <- length(all.vars(scale.sp.form)) + 1
+
+  n.param <- n.loc.sp + n.scale.sp + 1
+
+  IFargs <- list(...)
+
+  # sets coefficients of temporal covariates to 0
+  if(method == "LeastSq") {
+
+    if(exists("type", where = IFargs) & !is.null(IFargs$type)) {
+
+      #browser()
+      YY <- fgev_hom(data, method = "BFGS", scale.link = scale.link)$mle
+
+      .datfr <- data.frame(t(YY)) %>% dplyr::bind_cols(spat.cov)
+
+      lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), paste0(scale.link$name, "(scale)"))
+
+      st_disp <- mean(.datfr$loc/.datfr$scale)
+      names(st_disp) <- "disp"
+      st_sigmas <- lm(lm.sigma, data = .datfr)$coefficients
+      names(st_sigmas) <-  paste0("scale", 0:(length(st_sigmas)-1))
+      st_shape <- mean(.datfr$shape)
+      names(st_shape) <- "shape"
+
+      if(is.null(scale.temp.form)){
+        start_vals <- c(st_disp, st_sigmas, st_shape)
+
+      }
+      else{
+
+        n.scale.temp <- length(all.vars(scale.temp.form))
+
+        st_temp_scale <- rep(0, n.scale.temp)
+        names(st_temp_scale) <- paste0("tempScale", 1:n.scale.temp)
+
+        start_vals <- c(st_disp, st_sigmas, st_shape, st_temp_scale)
+      }
+
+    }
+
+    else {
+
+      YY <- apply(data, 2,  function(.x) evd::fgev(.x, std.err = F)$estimate)
+
+      .datfr <- data.frame(t(YY)) %>% dplyr::bind_cols(spat.cov)
+
+
+      lm.mu <- reformulate(deparse(loc.sp.form[[2]]), "loc")
+      lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), paste0(scale.link$name, "(scale)"))
+
+      st_mus <- lm(lm.mu, data = .datfr )$coefficients
+      names(st_mus) <- paste0("loc", 0:(length(st_mus)-1))
+
+      st_sigmas <- lm(lm.sigma, data = .datfr)$coefficients
+      names(st_sigmas) <-  paste0("scale", 0:(length(st_sigmas)-1))
+
+      st_shape <- mean(.datfr$shape)
+      names(st_shape) <- "shape"
+
+      if(n.loc.temp == 0 & n.scale.temp == 0) {
+        start_vals <- c(st_mus, st_sigmas, st_shape)
+      }
+      else { # initialise zeros for temporal coefficients
+
+        st_temp_loc <- rep(0, n.loc.temp)
+        if(n.loc.temp > 0){
+          names(st_temp_loc) <- paste0("tempLoc", 1:n.loc.temp)
+        }
+
+        st_temp_scale <- rep(0, n.scale.temp)
+        if(n.scale.temp > 0 ){
+          names(st_temp_scale) <- paste0("tempScale", 1:n.scale.temp)
+        }
+
+        start_vals <- c(st_mus, st_sigmas, st_shape, st_temp_loc, st_temp_scale)
+      }
+    }
+
+  }
+
+  # estimates location trend based on mean of stationwise location trends
+  # (one covariate only)
+  if(method == "LeastSqTemp") {
+
+    if(is.null(temp.cov) | !(nrow(temp.cov) == nrow(data))) {
+      stop("Please provide a temporal covariate of the same length as the data.")
+    }
+
+    YY <- apply(data, 2,
+                function(.x) evd::fgev(.x, nsloc = data.frame(temp.cov), std.err = F)$estimate)
+
+    .datfr <- data.frame(t(YY)) %>% dplyr::bind_cols(spat.cov)
+
+
+    lm.mu <- reformulate(deparse(loc.sp.form[[2]]), "loc")
+    # lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), "log(scale)")
+    lm.sigma <- reformulate(deparse(scale.sp.form[[2]]), paste0(scale.link$name, "(scale)"))
+
+    st_mus <- lm(lm.mu, data = .datfr )$coefficients
+    names(st_mus) <- paste0("loc", 0:(length(st_mus)-1))
+
+    st_sigmas <- lm(lm.sigma, data = .datfr)$coefficients
+    names(st_sigmas) <-  paste0("scale", 0:(length(st_sigmas)-1))
+
+    st_shape <- mean(.datfr$shape)
+    names(st_shape) <- "shape"
+
+    # initialise zeros for temporal coefficients
+
+    st_temp_loc <- mean(.datfr[, 2])
+    names(st_temp_loc) <- "tempLoc1"
+
+
+    st_temp_scale <- rep(0, n.scale.temp)
+    if(n.scale.temp > 0 ){
+      names(st_temp_scale) <- paste0("tempScale", 1:n.scale.temp)
+    }
+
+    start_vals <- c(st_mus, st_sigmas, st_shape, st_temp_loc, st_temp_scale)
+
+
+  }
+
+  # can estimate arbitrary amount of (trend) coefficients.
+  # No link function for scale parameter
+  if(method == "spatialGev"){
+
+    if (is.null(temp.cov) & any( c(n.loc.temp, n.scale.temp) > 0)) {
+
+      warning("No temporal covariate was supplied to compute starting values with
+             this method. Initial Temporal parameters are set to 0.")
+
+      start_params <- SpatialExtremes::fitspatgev(data = data,
+                                                  covariables = as.matrix(spat.cov),
+                                                  loc.form =  loc.sp.form,
+                                                  scale.form = scale.sp.form,
+                                                  shape.form = ~ 1)$fitted.values
+    } else {
+
+      start_params <- SpatialExtremes::fitspatgev(data = data,
+                                                  covariables = as.matrix(spat.cov),
+                                                  loc.form =  loc.sp.form,
+                                                  scale.form = scale.sp.form,
+                                                  shape.form = ~ 1,
+                                                  temp.form.loc = loc.temp.form,
+                                                  temp.form.scale = scale.temp.form,
+                                                  temp.cov = as.matrix(temp.cov))$fitted.values
+    }
+
+    st_param <- list(loc = start_params[startsWith(names(start_params),"loc")],
+                     scale = start_params[startsWith(names(start_params),"scale")],
+                     shape = start_params[startsWith(names(start_params),"shape")])
+
+
+    start_vals <- numeric(n.param)
+    start_vals[1:n.loc.sp] <- st_param$loc
+
+    # caution: SpatialExtremes doesn't use link functionv for scale parameter,
+    # method best to use without link function (identity) or when scale is constant
+    start_vals[(n.loc.sp +1):(n.param -1)] <- scale.link$linkfun(st_param$scale)
+
+    start_vals[n.param] <- st_param$shape
+    names(start_vals) <- c(paste0("loc", 0:(n.loc.sp - 1)),
+                           paste0("scale", 0:(n.scale.sp - 1)), "shape")
+
+    if(n.loc.temp  > 0) {
+      sv_temp_loc <- numeric(n.loc.temp)
+      if(!(is.null(temp.cov))) {
+        sv_temp_loc <- start_params[startsWith(names(start_params),"tempCoeffLoc")]
+      }
+      names(sv_temp_loc) <- paste0("tempLoc", 1:n.loc.temp)
+      start_vals <- c(start_vals, sv_temp_loc)
+    }
+    if(n.scale.temp  > 0) {
+      sv_temp_scale <- numeric(n.scale.temp)
+      if(!(is.null(temp.cov))) {
+        sv_temp_scale <- start_params[startsWith(names(start_params),"tempCoeffScale")]
+      }
+      names(sv_temp_scale) <- paste0("tempScale", 1:n.scale.temp)
+      start_vals <- c(start_vals, sv_temp_scale)
+    }
+  }
+
+  # most basic method. Estimates only stationary parameters, other coefficients are 0
+  if(method == "fgevMean"){
+
+    start_st <-  apply(data,2, function(.x){evd::fgev(.x[!is.na(.x)],  std.err = F)})
+    start_st <- purrr::map(purrr::map_dfr(start_st, function(x) x$estimate), mean)
+    start_vals <- numeric(n.param)
+    start_vals[1] <- start_st$loc
+    start_vals[n.loc.sp + 1] <- scale.link$linkfun(start_st$scale)
+    start_vals[n.param] <- start_st$shape
+    names(start_vals) <- c(paste0("loc", 0:(n.loc.sp-1)),
+                           paste0("scale", 0:(n.scale.sp -1)), "shape")
+
+
+    if(n.loc.temp  > 0) {
+      sv_temp_loc <- rep(0, n.loc.temp)
+      names(sv_temp_loc) <- paste0("tempLoc", 1:n.loc.temp)
+      start_vals <- c(start_vals, sv_temp_loc)
+    }
+    if(n.scale.temp  > 0) {
+      sv_temp_scale <- rep(0, n.scale.temp)
+      names(sv_temp_scale) <- paste0("tempScale", 1:n.scale.temp)
+      start_vals <- c(start_vals, sv_temp_scale)
+    }
+  }
+
+  if(print_start_vals){
+    message( "start values are", "\n")
+    print(c(  round(start_vals,3) ))
+  }
+
+  start_vals
+
+}

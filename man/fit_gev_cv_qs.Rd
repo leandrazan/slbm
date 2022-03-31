@@ -65,3 +65,18 @@ cross-validation test set.
 Fit a GEV distribution to block maxima of a univariate time series,
 estimate quantiles and compute quantile scores based on cross-validation
 }
+\examples{
+df <- data.frame(obs = evd::rgpd(30*50), Index = rep(1:50, each = 30))
+concbm <- compute_conc_bm(df, nlo = 3, blcksz = 30)
+djbm <- data.frame( obs = blockmax(df$obs, r = 30, "disjoint"),  Index = 1:50)
+slbm <- data.frame( sldata = blockmax(df$obs, r = 30, "sliding"),
+                          Index = rep(1:50, each = 30)[1:(49*30 +1)])
+cvfits <- fit_gev_cv_qs(djbm = djbm, slbm = slbm, conc_bm = concbm, testset = "consec" ,
+quants = 1-1/c(2,5,10, 20, 50, 100, 200 ), n.cv = NULL,
+fixpar = NULL )
+# Now you can compute the mean quantile scores of the cross-validated values:
+cvfits \%>\% dplyr::select(-c(djdat, est.quants)) \%>\%
+dplyr::group_by(estimator, ps) \%>\%
+dplyr::summarise( MeanQS = mean(quant_score),  .groups = "drop")
+
+}

@@ -1,0 +1,47 @@
+#' Synthetic example dataset of `daily` observations at 8 stations.
+#'
+#'
+#' @format A matrix with 3600 rows and 8 columns.
+#' Each column contains measurements of a station.
+#'
+#' @details
+#' The example data was generated using the \code{\link[SpatialExtremes]{rmaxstab}}
+#' function of the \code{SpatialExtremes} package as follows:
+#'
+#' @examples
+#' \dontrun{
+#' ### dataset was generated as follows:
+#' set.seed(3)
+#' ny <- 40        # number of  where blocks of size 90 were observed
+#' dstat <- 8      # number of stations
+#' x <- seq(0, dstat, length = dstat)  # latitude
+#' y <- runif(dstat)                   # longitude
+#' spatial_cvrt <- data.frame(lat  = x, lon = y, ele = runif(dstat)) # spatial covariate s
+#' ## smoothed GMST anomaly covariate
+#' data("GMST")
+#' GMST1 <- GMST %>% dplyr::filter(Year %in% 1980:2019)
+#' temp_cvrt <- rep(GMST1$smoothedGMST[], each = 90)
+#' coords <- cbind(spatial_cvrt$lat, spatial_cvrt$lon)
+#' colnames(coords ) <- c("lat", "lon")
+#' MMsc <- model.matrix( ~ lon + lat, model.frame( ~ lon + lat,
+#'                                     data = spatial_cvrt, na.action = na.pass))
+#' scale_param <- as.numeric(exp(MMsc %*% c(0.4, 0.3, 0.2)))
+#' loc_param <- 2*scale_param
+#' loc_param <- matrix(rep(loc_param, each = 90*40), ncol = 8) +
+#'                    1.5*matrix(rep(temp_cvrt, 8), ncol = 8)
+#' exdat <- SpatialExtremes::rmaxstab(ny*blcksz,
+#'                              coord = coords, cov.mod = "whitmat", nugget = 0,
+#'                                     range = 3, smooth = 0.5)
+#' # transform margins to GEV-distributions
+#'  for (i in 1:dstat) {
+#'    for( n in 1:90*40) {
+#'      exdat[n,i] <- SpatialExtremes::frech2gev(exdat[n,i],
+#'                                           loc = loc_param[n,i],
+#'                                           scale = scale_param[i],
+#'                                           shape =  0.2)
+#'  }
+#' }
+#'}
+"ExampleData"
+
+
