@@ -7,6 +7,33 @@
 ## ... can be the following arguments: maxit or similar for optim,
 ## temp.cov for computing starting values with SpatialExtremes when depending on temporal cov.
 #  type = IF for homogeneity assumption
+
+#' Fit spatial-temporal GEV model based on sliding block maxima
+#'
+#' @param data A nested tibble containing the unique sliding block maxima and their
+#' frequency for the considered locations as obtained from the function \link{get_uniq_bm}.
+#' @param loc.sp.form R formula definining the spatial model for the location parameter.
+#' @param scale.sp.form R formula definining the spatial model for the scale parameter.
+#' @param loc.temp.form R formula definining the temporal trend for the location parameter.
+#' @param scale.temp.form R formula definining the temporal trend for the scale parameter.
+#' @param spat.cov A data frame containing the spatial covariates used in the formulations
+#' of the spatial formulas.
+#' @param start_vals Optional; a vector containing initial values for the log Likelihood
+#' which is to be optimised. If omitted, initial values are computed with \code{\link{get_start_vals}}.
+#' @param datastart The data matrix on which starting values will be computed if
+#' none are passed in `start_vals`.
+#' @param use_gr Logical; whether to use theoretical gradient function when optimising.
+#' Not working yet.
+#' @param method The optimisation method that is passed to `optim`. Defaults to "BFGS".
+#' @param st_val_meth Method passed to `get_start_vals` that is
+#' @param print_start_vals
+#' @param scale.link
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                          loc.temp.form = NULL, scale.temp.form = NULL,
                          spat.cov, start_vals = NULL, datastart = NULL, use_gr = FALSE,
