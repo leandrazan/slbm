@@ -85,11 +85,11 @@ prec <- rgamma(length(dates), shape = 0.1)
 example_data <- data.frame(datetime = dates, prec = prec)
 
 agbm <- get_agg_bm(example_data, ds = c(1,2,4,8,16, 24, 48))
-agdf <- fun_aggregate2df( example_data, ds = c(1,2,4,8,16, 24, 48) )
+agdf <- fun_aggregate2df(example_data, ds = c(1,2,4,8,16, 24, 48))
 concbm <- compute_conc_bm_id(agdf, testset = "consec")
 cvres <- fit_dgev_cv_qs(agbm, concbm,  ds = c(1,4,8, 24))
 # compute mean quantile scores based on cross-validation:
-cvres \%>\% dplyr::select( - c( mut, sigma0, shape, eta, conv, Testdata )) \%>\%
+cvres \%>\% dplyr::select( - c(mut, sigma0, shape, eta, conv, Testdata)) \%>\%
           dplyr::group_by(ds, ps, estimator) \%>\%
           dplyr::summarise(MQS = mean(quant_score), .groups = "drop")
 }

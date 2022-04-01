@@ -1,14 +1,5 @@
-## Likelihood of spatial block maxima with covariates
-#library(tidyverse)
-#rm(list = ls())
-
-
-### make one version that operates on sliding block maxima and can handle
-## various temporal covariates
-### the other version optimises the weighted log Likelihood, only one temporal covariate
-## possible
-### also implement under IF assumption
-
+## deprecated functions, only one interesting is `fit_spgev_IF` which fits
+## GEV model under IF assumptions with parameters depending on covariates
 
 ## uses exp() as link function for scale parameter
 nll_spat <- function(params, loc.sp.form, scale.sp.form,
@@ -97,77 +88,6 @@ nll_spat <- function(params, loc.sp.form, scale.sp.form,
 }
 
 
-#yyuniq <- get_uniq_bm(yy, blcksz = 90)
-
-#bm_unique <- bm_unique %>% tidyr::unnest(cols = uniq_data)
-
-# data consists of unique values of sliding bm and resp. frequency of occurence
-# implement without temporal covariates first
-# later: unique block maxima grouped by station and covariate value
-nll_spat_sl <- function(params, loc.sp.form, scale.sp.form,
-         loc.temp.form = NULL, scale.temp.form = NULL,
-         data, spat.cov, temp.cov = NULL, hom = FALSE, scale.link = make.link("log")){
-
-
-  n.site <- nrow(data)
-  n.spat <- nrow(spat.cov)
-  # n.temp <- ncol(temp.cov)
-
-
-  params.sp <- list(loc = params[startsWith(names(params),"loc")],
-                    scale = params[startsWith(names(params),"scale")],
-                    shape = params[startsWith(names(params),"shape")])
-
-  # params.temp <- list(loc = params[startsWith(names(params),"tempLoc")],
-  #                     scale = params[startsWith(names(params),"tempScale")])
-  #
-  # params.temp <- purrr::map(params.temp, function(.x) ifelse(length(.x) == 0, 0, .x) )
-
-  model.loc.sp <- model.matrix(loc.sp.form, model.frame(loc.sp.form,
-                                                        data = spat.cov, na.action = na.pass))
-
-  model.scale.sp <- model.matrix(scale.sp.form, model.frame(scale.sp.form,
-                                                            data = spat.cov, na.action = na.pass))
-
-  param.loc <- data.frame(loc = model.loc.sp %*% params.sp$loc)
-
-
-
-  param.scale <-  data.frame(scale = model.scale.sp %*% params.sp$scale)
-
-  param_new <- dplyr::bind_cols(param.loc, param.scale) %>% dplyr::mutate( shape = params.sp$shape)
-
-
-  data <- data %>% dplyr::bind_cols(param_new)
-
-  if(abs(params.sp$shape) < 1e-8){
-    data <- data %>%
-      dplyr::mutate( likh = purrr::pmap_dbl( list( .ud = uniq_data, .loc = loc, .scale = scale, .shape = shape),
-                                             .f = function(.ud, .loc, .scale, .shape){
-                                               yy <- (.ud$slbm - .loc)/exp(.scale)
-                                               t(.ud$n) %*% (.scale + yy + exp(-yy))
-                                             }))
-
-  }
-  else{
-    data <- data %>%
-      dplyr::mutate( likh = purrr::pmap_dbl( list( .ud = uniq_data, .loc =loc, .scale = scale, .shape = shape),
-                                             .f = function(.ud, .loc, .scale, .shape){
-                                               yy <- 1 + .shape*(.ud$slbm - .loc)/exp(.scale)
-                                               .ud$n %*% (.scale + (1/.shape +1)* log(yy) + yy^(-1/.shape) )
-                                             }))
-
-    # yy <- 1+ params.sp$shape*(data/exp(param.scale) - param.loc/exp(param.scale))
-    #
-    # likh <- sum( param.scale + (1/params.sp$shape +1)*log(yy) + yy^(-1/params.sp$shape),
-    #              na.rm = TRUE)
-    if(any(yy <0, na.rm = TRUE)){ likh <- 1e+10}
-
-  }
-  # data$likh
-  sum(data$likh)
-  #return(likh)
-}
 
 
 log_dens <- function(obs, weight,  loc_temp, loc_sp, scale_temp, scale_sp, shape) {
@@ -188,8 +108,6 @@ log_dens <- function(obs, weight,  loc_temp, loc_sp, scale_temp, scale_sp, shape
   # -weight*evd::dgev(x = obs, loc = loc_temp + loc_sp, scale = scale_temp + scale_sp,
   #           shape = shape, log = TRUE)
 }
-
-
 
 
 
@@ -610,11 +528,7 @@ gr_spat_gev_sl <- function(params, loc.sp.form , scale.sp.form,
   # print(c(gr_loc, gr_scale, gr_shape))
   return(c(gr_loc, gr_scale, gr_shape, gr_loc_temp, gr_scale_temp))
 }
-
-#################################################################################
-# the estimated scale parameters are the sigma_i of
-# log(sigma(s)) = sigma_0 + sigma_1*cvrt1 + sigma_2*scrt2 + ...
-
+##################################################################
 
 fit_spgev <- function(data, loc.sp.form, scale.sp.form,
                       loc.temp.form = NULL, scale.temp.form = NULL,
@@ -796,12 +710,3 @@ fit_spgev_IF <- function(data,  scale.sp.form,
 }
 
 
-
-
-
-
-
-# fit_spgev_sl(data = bms, loc.sp.form = ~ lon + ele, scale.sp.form =  ~ lon,
-#              loc.temp.form = ~ GMST, scale.temp.form = NULL,
-#              spat.cov = spatial_cvrt, start_vals = params, use_gr = FALSE,
-#              method = "Nelder-Mead", st_val_meth = "LeastSq", print_start_vals = TRUE)

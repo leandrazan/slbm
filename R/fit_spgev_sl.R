@@ -19,21 +19,60 @@
 #' @param spat.cov A data frame containing the spatial covariates used in the formulations
 #' of the spatial formulas.
 #' @param start_vals Optional; a vector containing initial values for the log Likelihood
-#' which is to be optimised. If omitted, initial values are computed with \code{\link{get_start_vals}}.
+#' which is to be optimised. If omitted, initial values are computed with \code{\link{get_start_vals()}}.
 #' @param datastart The data matrix on which starting values will be computed if
 #' none are passed in `start_vals`.
 #' @param use_gr Logical; whether to use theoretical gradient function when optimising.
 #' Not working yet.
-#' @param method The optimisation method that is passed to `optim`. Defaults to "BFGS".
-#' @param st_val_meth Method passed to `get_start_vals` that is
-#' @param print_start_vals
-#' @param scale.link
-#' @param ...
+#' @param method The optimisation method that is passed to `optim()`. Defaults to "BFGS".
+#' @param st_val_meth Method passed to `get_start_vals()` for cpmputing starting values if none
+#' are provided.
+#' @param print_start_vals Logical; whether to print out the initial parameter values.
+#' @param scale.link The link function that is used to model the scale parameter.
+#' Defaults to \eqn{log(\sigma) = \sigma_0 + \sigma_1 + ... }.
+#' @param ... Further arguments. These can be
+#' \describe{
+#' \item{temp.cov}{A numeric vector or matrix containing temporal covariates for the
+#' data provided in `datastart` when needed to compute initial values. For more details,
+#' see the documentation of \code{\link{get_start_vals}}.}
+#' \item{type}{If you set `type  = "IF"`, coefficients will be fitted under the assumption
+#' of constant dispersion parameter. In this case, any formulas passed concerning the location
+#' parameter will be ignored and only the formulas concerning the scale parameter will be considered. }
+#' \item{maxit, reltol ... }{Furhter components that are passed as a list to the
+#' `control` argument of `optim()`.}
+#' }
 #'
-#' @return
+#' @return Returns a list containing the following components:
+#' \describe{
+#' \item{mle}{A numeric vector containing the estimated parameter values.}
+#' \item{nllh}{The negative log-Likelihood evaluated at the estimated parameters.}
+#' \item{conv}{The convergence code, inherited from `optim`.}
+#' \item{counts}{A two-element integer vector giving the number of calls to the negative
+#' log-Likelihood and its gradient, respectively, as obtained from optim.}
+#' }
 #' @export
 #'
 #' @examples
+#' data("ExampleData")
+#' data("GMST")
+#' tempcv <- GMST %>% dplyr::filter(Year %in% c(1980:2019))
+#' tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
+#' tempcvsl <- data.frame(GMST = tempcvsl)
+#' set.seed(3)
+#' spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+#'    lon = runif(8), ele = runif(8))
+#' yy <- data.frame(ExampleData) %>%
+#'       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
+#' ##############################
+#' bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST)
+#' # disjoint block maxima are used for computing starting values:
+#' djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
+#' fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
+#'               scale.sp.form = ~ lon +lat,
+#'               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
+#'               datastart = djbm, st_val_meth = "LeastSqTemp",
+#'               temp.cov = tempcv$smoothedGMST)
+#'
 fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                          loc.temp.form = NULL, scale.temp.form = NULL,
                          spat.cov, start_vals = NULL, datastart = NULL, use_gr = FALSE,

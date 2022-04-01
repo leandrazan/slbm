@@ -15,42 +15,30 @@ ExampleData
 Synthetic example dataset of \code{daily} observations at 8 stations.
 }
 \details{
-The example data was generated using the \code{\link[SpatialExtremes]{rmaxstab}}
-function of the \code{SpatialExtremes} package as follows:
+The example data was generated using the \code{\link{sim_spatial}}
+function as follows:
 }
 \examples{
 \dontrun{
 ### dataset was generated as follows:
-set.seed(3)
-ny <- 40        # number of  where blocks of size 90 were observed
-dstat <- 8      # number of stations
-x <- seq(0, dstat, length = dstat)  # latitude
-y <- runif(dstat)                   # longitude
-spatial_cvrt <- data.frame(lat  = x, lon = y, ele = runif(dstat)) # spatial covariates
-## smoothed GMST anomaly covariate
 data("GMST")
-GMST1 <- GMST \%>\% dplyr::filter(Year \%in\% 1980:2019)
-temp_cvrt <- rep(GMST1$smoothedGMST[], each = 90)
+set.seed(1)
+ny <- 40
+blcksz <- 90
 coords <- cbind(spatial_cvrt$lat, spatial_cvrt$lon)
 colnames(coords ) <- c("lat", "lon")
-MMsc <- model.matrix( ~ lon + lat, model.frame( ~ lon + lat,
-                                    data = spatial_cvrt, na.action = na.pass))
-scale_param <- as.numeric(exp(MMsc \%*\% c(0.4, 0.3, 0.2)))
-loc_param <- 2*scale_param
-loc_param <- matrix(rep(loc_param, each = 90*40), ncol = 8) +
-                   1.5*matrix(rep(temp_cvrt, 8), ncol = 8)
-exdat <- SpatialExtremes::rmaxstab(ny*blcksz,
-                             coord = coords, cov.mod = "whitmat", nugget = 0,
-                                    range = 3, smooth = 0.5)
-# transform margins to GEV-distributions
- for (i in 1:dstat) {
-   for( n in 1:90*40) {
-     exdat[n,i] <- SpatialExtremes::frech2gev(exdat[n,i],
-                                          loc = loc_param[n,i],
-                                          scale = scale_param[i],
-                                          shape =  0.2)
- }
-}
+mdax <- MDAdata(ny*blcksz, locations = coords, margins = list(distr = "gpd", shape = -0.2),
+                ms = list(kovmod = "whitmat", nugget = 0, range = 3, smooth = 0.44))
+
+tempcov1 <- data.frame(GMST = rep(GMST$smoothedGMST[101:140], each = 90))
+xx <- sim_spatial(mdax, params = c("loc0" = 10, "loc1" = 2, "loc2" = 0.05,
+                                   "scale0" = 2, "scale1" = 0.2, "shape" = -0.2,
+                                   "tempLoc" = 2),
+                  loc.sp.form = ~ lon + lat, scale.sp.form = ~ lon,
+                spat.cov = spatial_cvrt, temp.cov = tempcov1,
+                  loc.temp.form = ~ GMST)
+
+plot.ts(apply(xx, 2, blockmax, r = 90, "disjoint"))
 }
 
 }
