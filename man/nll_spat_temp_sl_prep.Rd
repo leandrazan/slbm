@@ -58,13 +58,14 @@ yy <- data.frame(ExampleData) \%>\%
 ##############################
 bms <- get_uniq_bm(yy, 90, temp_cvrt = tempcv$GMST)
 prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,
-              scale.sp.form = ~ lon +lat + ele,
+              scale.sp.form = ~ lon +lat,
               loc.temp.form = ~ GMST, data = bms, spat.cov = spatial_cvrt)
 
-params  <- c("loc0" = 100, "loc1" = -10, "loc2" = 4, "loc3" = -40, "scale0" = 120,
-               "scale1" = -50, "scale2" = 5, "scale3" = -60, "shape" = 0.4, "tempLoc1" = -5 )
+params  <- c("loc0" = 18, "loc1" = -1, "loc2" = 0.4, "loc3" = 0.02, "scale0" =0.2,
+               "scale1" = 0.1, "scale2" = 0.1, "shape" = 0.3, "tempLoc1" = 1)
 
 nll_spat_temp_sl_prep(params = params, loc.sp.form = ~ lon + lat + ele,
-          scale.sp.form = ~ lon + lat + ele, loc.temp.form = ~ GMST,
-          dataprep = prepdata, spat.cov = spatial_cvrt)
+          scale.sp.form = ~ lon + lat, loc.temp.form = ~ GMST,
+          dataprep = prepdata, spat.cov = spatial_cvrt,
+          scale.link = make.link("log"))
 }

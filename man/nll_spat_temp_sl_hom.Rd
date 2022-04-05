@@ -47,14 +47,15 @@ spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
    lon = runif(8), ele = runif(8))
 ##############################
 bms <- get_uniq_bm(yy, 90)
-prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,
-              scale.sp.form = ~ lon +lat + ele, data = bms, spat.cov = spatial_cvrt)
+prepdata <- prep4spatml(loc.sp.form = ~ lon + lat,
+              scale.sp.form = ~ lon +lat, data = bms, spat.cov = spatial_cvrt)
 
-params  <- c("disp" = 2, "scale0" = 120,
-               "scale1" = -50, "scale2" = 5, "scale3" = -60, "shape" = 0.4)
+params  <- c("disp" = 10, "scale0" = 1,
+               "scale1" = -0.5, "scale2" = 0.1,  "shape" = -0.1)
 
 nll_spat_temp_sl_hom(params = params,
           scale.sp.form = ~ lon + lat + ele,
-          dataprep = prepdata, spat.cov = spatial_cvrt)
+          dataprep = prepdata, spat.cov = spatial_cvrt,
+           scale.link = make.link("identity"))
 
 }
