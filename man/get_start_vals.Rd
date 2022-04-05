@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_start_vals.R
 \name{get_start_vals}
 \alias{get_start_vals}
-\title{Compute initial values for ML fitting}
+\title{Compute initial values for fitting a spatio-temporal GEV model.}
 \usage{
 get_start_vals(
   data,
@@ -32,7 +32,8 @@ get_start_vals(
 \item{spat.cov}{A data frame containing the spatial covariates used in the formulations
 of the spatial formulas.}
 
-\item{temp.cov}{A named matrix containing the temporal covariates used in the formulations
+\item{temp.cov}{A data frame (or matrix) with named columns containing the
+temporal covariates used in the formulations
 of the temporal formulas.}
 
 \item{method}{The method used for computing initial values: One of "LeastSq",
@@ -44,23 +45,94 @@ of the temporal formulas.}
 
 \item{...}{Further agruments that can be passed. Atm, the only supported further
 argument is \code{type = "IF"} for computing initial values under homogeneity
-constraint (Indexflood assumption).}
+constraint (Indexflood assumption). See details for further information.}
 }
 \value{
 A vector containing a set of initial parameter values.
 }
 \description{
-Compute initial values for ML fitting
+Compute initial values for fitting a spatio-temporal GEV model.
+}
+\details{
+The different methods supplied in \code{methods} work as follows.
+\describe{
+\item{LeastSq}{The three GEV parameters are estimated stationwise (with the
+function \code{\link[evd]{fgev}} of the \code{evd} package).
+Then, linear models with model equations as given by the \emph{spatial} formulas
+are fitted for location and scale. The estimated model coefficients are returned
+as respective initial values. For the initial vale of the shape parameter, the average
+over stationwise shape parameters is returned.
+If any formula for a trend in location and/or scale parameter is given, the
+corresponding initial coefficients are set to 0.
+
+The link function passed in \code{scale.link} is used for modelling
+the scale parameter.
+}
+\item{LeastSqTemp}{This method computes initial values for the temporal location and
+the spatial
+coefficients, so the \code{loc.temp.form}
+and the \code{temp.cov}
+arguments should not be \code{NULL}.
+GEV parameters and the location trend coefficient are estimated stationwise,
+with the function \code{\link[evd]{fgev}} of the \code{evd} package and by passing
+the temporal covariate to its \code{nsloc}-argument).
+
+The initial spatial coefficients and shape are then computed as described in the \code{LeastSq}-method,
+while
+the mean of the estimated stationwise location trend coefficients
+is taken as the initial location trend coefficient. For the scale parameter,
+the link function passed in \code{scale.link} is used for modelling.
+Currently, with this method, a trend in the scale parameter is not considered.
+}
+\item{spatialGEV}{
+This method computes initial valus with the function
+\code{\link[spatialExtremes]{fitspatgev}} of the \code{spatialExtremes} package.
+With this method, initial coefficients for all spatial and temporal covariates
+can be computed.
+Since \code{\link[spatialExtremes]{fitspatgev}} does not support link functions,
+the use of any other link function than the identitiy function
+when the scale parameter depends on any covariate is not recommended.
+}
+\item{fgevMean}{This is the most basic and least accurate method of the possible
+methods.
+The initial values for the constant parts of the parameters (the intercepts)
+are the averages of stationwise GEV parameter estimates. Coefficients
+concerning any of the covariates are set to 0.
+}
+}
+
+If the additional argument \code{type = IF} is set,
+initial parameters for the GEV model under homogeneity constraint are computed.
+That is, the ratio of location and scale parameter is assumed to be constant in
+space and time. In this case, the linear model of the location parameter
+must be a multiple \eqn{\delta} of the scale parameter's linear model.
+This
+\eqn{\delta} is a parameter of the model.
+Initial values are computed for \eqn{\delta} as well as the coefficients of the
+formula passed in \code{scale.form} (\code{loc.form} can
+be \code{NULL} or anything else, since it will not be used).
+First, parameter values \eqn{(\delta_i, \sigma_i, \gamma_i)} are estimated stationwise.
+Then, the average values of
+\eqn{\delta_i} and \eqn{\gamma_i}
+are returned as initial values of \eqn{\delta} and \eqn{\gamma}, respectivelym
+while the estimated coefficients
+of the linear model fitted to
+the estimated scale parameter \eqn{\sigma_i} are returned as initial values for
+the spatial coefficients.
 }
 \examples{
+### prepare data
 data("ExampleData")
 data("GMST")
+
 djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
 
 set.seed(3)
 spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
    lon = runif(8), ele = runif(8))
 tempcov <- GMST$smoothedGMST[101:140]
+
+### compute initial values based on disjoint block maxima
 get_start_vals(djbm, loc.sp.form = ~ lon + lat, scale.sp.form = ~ lon + lat,
 loc.temp.form = ~ GMST, scale.link = make.link("identity"),
 spat.cov = spatial_cvrt, temp.cov = tempcov, method = "spatialGev")
