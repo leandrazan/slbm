@@ -1,0 +1,117 @@
+---
+title: "Spatio-Temporal-GEV"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spatio-Temporal-GEV}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(slbm)
+library(dplyr)
+library(tidyr)
+```
+
+The function `fit_spgev_sl()` allows to fit a spatio-temporal GEV model to the 
+sample of sliding blockmaxima from several stations in space. 
+The model is assumed as follows: Let 
+\[ X_{t,d}, t = 1, \ldots, T, d = 1, \ldots, D, \]
+denote the observations of some variable of intereset on day $t$ at station $d$. 
+The sample of sliding block maxima with blocksize $r$ is then given by $(M_{t,d})$
+with
+\[ M_{t,d} =  \max\{ X_{t,d}, \ldots, X_{t + r -1, d}\}, t = 1, \ldots, T-r+1, d = 1, \ldots, D. \]
+
+Now, the following spatio-temporal GEV model is assumed:
+
+\[ M_{t,d} \sim \mathrm{GEV}(\mu(t,d), \sigma(t,d), \gamma(t,d)),  \]
+where
+\[ \mu(t,d) = \mathbf{X}_{\mu_s} \mathbf{\mu_s} + \mathbf{X}_{\mu_t}\mathbf{\mu}_t, \]
+and similar for $\sigma(t,d)$ and $\gamma(t,d)$, where 
+$\mathbf{X}_{\mu_s}$ and $\mathbf{X}_{\mu_t}$ denote spatial and temporal covariates, 
+respectively.
+
+
+Insert further explanation and formula for weighted $\log$-Likelihood.
+
+
+### Worklflow
+
+For the synthetic dataset contained in the package.
+
+```{r}
+data("ExampleData", package = "slbm")
+data("GMST", package = "slbm")
+```
+`GMST` contains values of the global mean surface temperature anomaly, which is 
+often considered as temporal covariate.  Because the synthetic dataset contains
+40
+block of 90 observations each (corresponding to 40 years of observations from a 
+season of length 90), we have to prepare the temporal covariate accordingly.
+Further, we reconstruct the same spatial covariates that were used when generating 
+the data. 
+```{r}
+tempcv <- GMST %>% dplyr::filter(Year %in% c(1980:2019))
+tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
+tempcvsl <- data.frame(GMST = tempcvsl)
+set.seed(3)
+spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+  lon = runif(8), ele = runif(8))
+```
+
+Now we compute (stationwise) the unique combinations of temporal covariate and values of sliding block maxima of blocksize $r$ 
+and their respective frequency of occurence. This is done with the function 
+`get_uniq_bm()`.
+
+```{r}
+yy <- data.frame(ExampleData) %>%
+      tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
+bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST)
+bmuniq
+bmuniq[1, ]$uniq_data
+```
+
+Now we also compute the sample of disjoint block maxima, because we want to compute
+starting values based on disjoint block maxima.
+```{r}
+djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
+
+```
+Now we can estimate the parameters of our model. 
+The spatial parts of the linear models for the location and scale parameter are
+passed as R formulas via the `loc.sp.form` and `scale.sp.form` arguments, the temporal formulas via 
+the `loc.temp.form` and `scale.temp.form` arguments (also as R formulas).
+
+```{r}
+fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
+             scale.sp.form = ~ lon +lat,
+             loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
+             datastart = djbm, st_val_meth = "LeastSqTemp",
+             temp.cov = tempcv$smoothedGMST)
+
+```
+
+Let's try different dependencies on covariates. Further, let's not use a link function 
+for modelling the scale parameter.
+```{r}
+fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon,
+             scale.sp.form = ~ lon ,
+             loc.temp.form = ~ GMST, 
+             spat.cov = spatial_cvrt,
+             datastart = djbm, st_val_meth = "LeastSqTemp",
+             temp.cov = tempcv$smoothedGMST, 
+             scale.link = make.link("identity"))
+```
+
+
+
+
+
+
