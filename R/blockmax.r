@@ -32,6 +32,8 @@ blockmax <- function(data, r, method=c("disjoint", "sliding")) {
                                       MARGIN = 2,
                                       FUN = max, na.rm = TRUE),
                    "sliding" = RcppRoll::roll_max(data, r, na.rm = TRUE))
+
+  result[result == -Inf] <- NA
   return(result)
 }
 

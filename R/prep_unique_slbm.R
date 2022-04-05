@@ -34,6 +34,46 @@
 #' ##### apply function #####
 #' bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt )
 #'
+# get_uniq_bm <- function(data, blcksz, temp.cov = NULL, tempvar = NULL){
+#
+#   if(!is.null(temp.cov)) {
+#
+#     ndata <- ncol(data)
+#
+#     bmx <- apply(data[ , 2:ndata],2,  blockmax, r = blcksz, "sliding")
+#     bmx <- bmx %>% dplyr::bind_cols(Datetime = data[1:nrow(bmx), 1])
+#
+#     bmx <- bmx %>% dplyr::right_join(temp.cov, by = c("Datetime"))
+#
+#     bmx <- bmx %>% tidyr::pivot_longer( 1:(ndata-1),
+#                                  names_to = "Station", values_to = "slbm") %>%
+#       dplyr::select(-Datetime)
+#
+#     nametempcvrt <- names(bmx %>% select( {{ tempvar }}))
+#     bmx <- rename(bmx, "temp_cvrt" = nametempcvrt )
+#
+#
+#     bmx %>% dplyr::group_by(Station, slbm, temp_cvrt ) %>%
+#       dplyr::summarise( n = n(), .groups = "drop") %>%
+#       dplyr::group_by(Station) %>%
+#       tidyr::nest(uniq_data = c(slbm, temp_cvrt, n)) %>%
+#       dplyr::ungroup()
+#
+#
+#   } else {
+#     data %>% dplyr::group_by(Station) %>%
+#       tidyr::nest() %>%
+#       dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
+#         bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
+#         bmx <- data.frame(slbm = bmx)
+#         bmx %>%  dplyr::group_by(slbm) %>%
+#           dplyr::summarise(n  = n()) } )) %>%
+#       dplyr::ungroup() %>%
+#       dplyr::select(-data)
+#   }
+# }
+
+### TO DO : FIX
 get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
 
   # if temporal covariate is used
@@ -59,6 +99,22 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
       dplyr::select(-data)
   }
 }
+
+  # if temporal covariate is used
+  # if(!is.null(temp_cvrt)) {
+  #   data %>% dplyr::group_by(Station) %>%
+  #     tidyr::nest() %>%
+  #     dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
+  #       bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
+  #       .temp_cvrt <- temp_cvrt %>% dplyr::filter(Index %in% .x$Datetime)
+  #       bmx <- data.frame(slbm = bmx, temp_cvrt = .temp_cvrt$smoothed[1:length(slbm), 1])
+  #       bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
+  #         dplyr::summarise(n  = n(), .groups = "drop") } )) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::select(-data)
+  # }
+
+
 
 #' Prepare sliding block maxima data for ML fitting
 #'
@@ -119,9 +175,12 @@ prep4spatml <- function(loc.sp.form, scale.sp.form,
 
     data <- data %>%
       dplyr::mutate(MatLocTemp =  purrr::map(uniq_data, function(.x){
+
+        datatemp <-  data.frame(.x$temp_cvrt)
+        colnames(datatemp) <- all.vars(loc.temp.form)
         model.matrix(loc.temp.form,
                      model.frame(loc.temp.form,
-                                 data = data.frame(GMST = .x$temp_cvrt),
+                                 data = datatemp,
                                  na.action = na.pass))
 
       }
@@ -132,11 +191,14 @@ prep4spatml <- function(loc.sp.form, scale.sp.form,
   if(!is.null(scale.temp.form)) {
     scale.temp.form <- update(scale.temp.form,  ~ . + 0)
 
+
     data <- data %>%
       dplyr::mutate(MatScaleTemp =  purrr::map(uniq_data, function(.x){
+        datatemp <-  data.frame(.x$temp_cvrt)
+        colnames(datatemp) <- all.vars(scale.temp.form)
         model.matrix(scale.temp.form,
                      model.frame(scale.temp.form,
-                                 data = data.frame(GMST = .x$temp_cvrt),
+                                 data = datatemp,
                                  na.action = na.pass))
 
       }
@@ -147,3 +209,5 @@ prep4spatml <- function(loc.sp.form, scale.sp.form,
 
   list( data = data, MatLocSp = model.loc.sp, MatScaleSp = model.scale.sp)
 }
+
+

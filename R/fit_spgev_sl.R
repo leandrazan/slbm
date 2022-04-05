@@ -53,7 +53,9 @@
 #' @export
 #'
 #' @examples
-#' data("ExampleData")
+#'
+#' ######## prepare data ##########################################
+#' #' data("ExampleData")
 #' data("GMST")
 #' tempcv <- GMST %>% dplyr::filter(Year %in% c(1980:2019))
 #' tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
@@ -72,6 +74,7 @@
 #'               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
 #'               datastart = djbm, st_val_meth = "LeastSqTemp",
 #'               temp.cov = tempcv$smoothedGMST)
+#'
 #'
 fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                          loc.temp.form = NULL, scale.temp.form = NULL,
@@ -98,6 +101,8 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                           data = data, spat.cov = spat.cov)
 
 
+
+
   if(is.null(start_vals)){
     if(!exists("temp.cov", where = add.args)) { add.args$temp.cov <- NULL }
 
@@ -112,6 +117,7 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                                   print_start_vals = print_start_vals,
                                   scale.link = scale.link,
                                   type = add.args$type)
+
 
     add.args <- add.args[!(names(add.args) == "temp.cov")]
 
@@ -153,3 +159,27 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
   list(mle = mlest$par, nllh = mlest$value, conv = mlest$convergence, counts = mlest$counts)
 
 }
+
+
+
+# data("ExampleData")
+# data("GMST")
+# tempcv <- GMST %>% dplyr::filter(Year %in% c(1980:2019))
+# tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
+# tempcvsl <- data.frame(GMST = tempcvsl, Datetime = rep(1:(90*40),
+#  each = 40)[1:length(tempcvsl)])
+# set.seed(3)
+# spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+#    lon = runif(8), ele = runif(8))
+# dates <- rep(1:(40), each = 90)
+# yy <- data.frame(Datetime = dates) %>% bind_cols(data.frame(ExampleData))
+#
+# bmuniq <- get_uniq_bm(yy, 90, temp.cov = tempcvsl, tempvar = GMST)
+#
+# ##### disjoint block maxima are used for computing starting values:
+# djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
+# fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
+#               scale.sp.form = ~ lon +lat,
+#               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
+#               datastart = djbm, st_val_meth = "LeastSqTemp",
+#               temp.cov = tempcv$smoothedGMST)

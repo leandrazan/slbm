@@ -81,7 +81,9 @@ log-Likelihood and its gradient, respectively, as obtained from optim.}
 Fit spatial-temporal GEV model based on sliding block maxima
 }
 \examples{
-data("ExampleData")
+
+######## prepare data ##########################################
+#' data("ExampleData")
 data("GMST")
 tempcv <- GMST \%>\% dplyr::filter(Year \%in\% c(1980:2019))
 tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
@@ -100,5 +102,6 @@ fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
               datastart = djbm, st_val_meth = "LeastSqTemp",
               temp.cov = tempcv$smoothedGMST)
+
 
 }

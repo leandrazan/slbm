@@ -35,15 +35,16 @@
 #' ##############################
 #' bms <- get_uniq_bm(yy, 90, temp_cvrt = tempcv$GMST)
 #' prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,
-#'               scale.sp.form = ~ lon +lat + ele,
+#'               scale.sp.form = ~ lon +lat,
 #'               loc.temp.form = ~ GMST, data = bms, spat.cov = spatial_cvrt)
 #'
-#' params  <- c("loc0" = 100, "loc1" = -10, "loc2" = 4, "loc3" = -40, "scale0" = 120,
-#'                "scale1" = -50, "scale2" = 5, "scale3" = -60, "shape" = 0.4, "tempLoc1" = -5 )
+#' params  <- c("loc0" = 18, "loc1" = -1, "loc2" = 0.4, "loc3" = 0.02, "scale0" =0.2,
+#'                "scale1" = 0.1, "scale2" = 0.1, "shape" = 0.3, "tempLoc1" = 1)
 #'
 #' nll_spat_temp_sl_prep(params = params, loc.sp.form = ~ lon + lat + ele,
-#'           scale.sp.form = ~ lon + lat + ele, loc.temp.form = ~ GMST,
-#'           dataprep = prepdata, spat.cov = spatial_cvrt)
+#'           scale.sp.form = ~ lon + lat, loc.temp.form = ~ GMST,
+#'           dataprep = prepdata, spat.cov = spatial_cvrt,
+#'           scale.link = make.link("log"))
 #' @importFrom stats lm model.frame model.matrix na.pass reformulate update
 #'
 nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
@@ -68,45 +69,45 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 
   scale_sp <-  data.frame(scale_sp = model.scale.sp %*% params.sp$scale)
 
-  dataprep <- dataprep$data
+  dataprep1 <- dataprep$data
 
-  dataprep <- dataprep %>% dplyr::bind_cols( loc_sp , scale_sp )
+  dataprep1 <- dataprep1 %>% dplyr::bind_cols( loc_sp , scale_sp )
 
 
 
   if(!is.null(loc.temp.form)) {
     loc.temp.form <- update(loc.temp.form,  ~ . + 0)
-    dataprep <- dataprep %>%
+    dataprep1 <- dataprep1 %>%
       dplyr::mutate(LocTemp =  purrr::map(MatLocTemp,
                                           ~ as.numeric( .x %*% params.temp$loc) )
       ) %>%
       dplyr::select( - MatLocTemp)
 
-    locpars <- purrr::map2(.x = dataprep$LocTemp, .y = dataprep$loc_sp, ~ .x + .y)
+    locpars <- purrr::map2(.x = dataprep1$LocTemp, .y = dataprep1$loc_sp, ~ .x + .y)
 
 
   } else {
-    locpars <- dataprep$loc_sp
+    locpars <- dataprep1$loc_sp
   }
 
 
   if(!is.null(scale.temp.form)) {
     scale.temp.form <- update(scale.temp.form,  ~ . + 0)
 
-    dataprep <- dataprep %>%
+    dataprep1 <- dataprep1 %>%
       dplyr::mutate(ScaleTemp =  purrr::map(MatScaleTemp,
                                             ~ as.numeric( .x %*% params.temp$scale) )
       ) %>%
       dplyr::select( - MatScaleTemp)
 
-    scalepars <- purrr::map2(.x = dataprep$ScaleTemp, .y = dataprep$scale_sp, ~ .x + .y)
+    scalepars <- purrr::map2(.x = dataprep1$ScaleTemp, .y = dataprep1$scale_sp, ~ .x + .y)
 
 
   } else {
-    scalepars <- dataprep$scale_sp
+    scalepars <- dataprep1$scale_sp
   }
 
-  yy <- purrr::map(dataprep$uniq_data, ~ .x$slbm)
+  yy <- purrr::map(dataprep1$uniq_data, ~ .x$slbm)
 
   link.scalepars <- scale.link$linkinv(scalepars)
 
@@ -126,10 +127,11 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 
   stopyn <- (any(unlist(purrr::map(yy, ~ any(.x < 0, na.rm = TRUE)))) | any(unlist(link.scalepars )<= 0) )
   if(stopyn) {
-    return( 1e+10 )
+    return( 1e+10)
   } else {
 
-    yy <- purrr::pmap( list(.x = yy, .y = link.scalepars , .z = dataprep$uniq_data),
+
+    yy <- purrr::pmap( list(.x = yy, .y = link.scalepars , .z = dataprep1$uniq_data),
                        .f = function(.x, .y, .z) {
                          u <- (log(.y) - (params.sp$shape +1)*log(.x) + .x)
                          u*.z$n
@@ -137,7 +139,8 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 
     )
 
-    sum(unlist(yy))
+    sum(unlist(yy), na.rm = TRUE)
+
   }
 
 
@@ -166,15 +169,16 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
 #'    lon = runif(8), ele = runif(8))
 #' ##############################
 #' bms <- get_uniq_bm(yy, 90)
-#' prepdata <- prep4spatml(loc.sp.form = ~ lon + lat + ele,
-#'               scale.sp.form = ~ lon +lat + ele, data = bms, spat.cov = spatial_cvrt)
+#' prepdata <- prep4spatml(loc.sp.form = ~ lon + lat,
+#'               scale.sp.form = ~ lon +lat, data = bms, spat.cov = spatial_cvrt)
 #'
-#' params  <- c("disp" = 2, "scale0" = 120,
-#'                "scale1" = -50, "scale2" = 5, "scale3" = -60, "shape" = 0.4)
+#' params  <- c("disp" = 10, "scale0" = 1,
+#'                "scale1" = -0.5, "scale2" = 0.1,  "shape" = -0.1)
 #'
 #' nll_spat_temp_sl_hom(params = params,
 #'           scale.sp.form = ~ lon + lat + ele,
-#'           dataprep = prepdata, spat.cov = spatial_cvrt)
+#'           dataprep = prepdata, spat.cov = spatial_cvrt,
+#'            scale.link = make.link("identity"))
 #'
 nll_spat_temp_sl_hom <- function(params, scale.sp.form,
                                  scale.temp.form = NULL,
@@ -257,3 +261,6 @@ nll_spat_temp_sl_hom <- function(params, scale.sp.form,
 
 
 }
+
+
+
