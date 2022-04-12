@@ -125,7 +125,10 @@ nll_spat_temp_sl_prep <- function(params, loc.sp.form, scale.sp.form,
                       })
   }
 
-  stopyn <- (any(unlist(purrr::map(yy, ~ any(.x < 0, na.rm = TRUE)))) | any(unlist(link.scalepars )<= 0) )
+  stopyn <-  (any(unlist(purrr::map(yy, ~ any(.x < 0, na.rm = TRUE)))) |
+                any(unlist(link.scalepars ) <= 0) |
+                (any(unlist(purrr::map(yy, ~ is.nan(.x))))))
+
   if(stopyn) {
     return( 1e+10)
   } else {
