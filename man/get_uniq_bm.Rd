@@ -12,8 +12,12 @@ measurements of the variable of interest at the Station referenced by \code{Stat
 
 \item{blcksz}{The blocksize for which block maxima are computed.}
 
-\item{temp_cvrt}{Optional; a numeric vector of the same length as the maximum  containing values of a temporal
-covariate. To be provided if you assume the distribution of your
+\item{temp_cvrt}{Optional; a numeric vector of length \code{nrow(data) - blcksz +1}
+containing values of a temporal
+covariate. The specific length is necessary in order to match each
+sliding block maximum to a value of the temproal
+covariate. If too long, the vector will cut off accordingly.
+To be provided if you assume the distribution of your
 data to be non-stationary and want to fit parameters accordingly.}
 }
 \value{

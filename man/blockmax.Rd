@@ -15,7 +15,7 @@ blockmax(data, r, method = c("disjoint", "sliding"))
 }
 \value{
 The time series of disjoint block maxima
-(a vector of length \eqn{\lfloor n/r \rfloor})
+(a vector of length \eqn{n/r} or \eqn{\lfloor n/r \rfloor} +1, see details)
 or sliding block maxima
 (a vector of length \eqn{n-r+1})
 }
@@ -23,6 +23,12 @@ or sliding block maxima
 For a given univariate time series of length n and block size
 parameter r (\eqn{1 \le r \le n}), \code{blockmax} computes either the time
 series of disjoint (non-overlapping) or sliding (overlapping) block maxima.
+}
+\details{
+If the length of \code{data} is not a multiple of the block length \code{r},
+the last block maximum returned when using the \code{disjoint}-method is the maximum
+of the remaining \eqn{(\lfloor n/r\rfloor) +1) \cdot r -n)} observations, where \eqn{n}
+is the length of the data.
 }
 \examples{
 x <- runif(200)

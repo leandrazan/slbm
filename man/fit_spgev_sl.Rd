@@ -83,7 +83,7 @@ Fit spatial-temporal GEV model based on sliding block maxima
 \examples{
 
 ######## prepare data ##########################################
-#' data("ExampleData")
+data("ExampleData")
 data("GMST")
 tempcv <- GMST \%>\% dplyr::filter(Year \%in\% c(1980:2019))
 tempcvsl <- rep(tempcv$smoothedGMST, each = 90)[1:(39*90 +1)]
