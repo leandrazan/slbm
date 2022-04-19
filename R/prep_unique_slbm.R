@@ -8,8 +8,12 @@
 #' @param data A tibble with columns `Station` and `Obs`, where `Obs` contains
 #' measurements of the variable of interest at the Station referenced by `Station`.
 #' @param blcksz The blocksize for which block maxima are computed.
-#' @param temp_cvrt Optional; a numeric vector of the same length as the maximum  containing values of a temporal
-#' covariate. To be provided if you assume the distribution of your
+#' @param temp_cvrt Optional; a numeric vector of length `nrow(data) - blcksz +1`
+#' containing values of a temporal
+#' covariate. The specific length is necessary in order to match each
+#' sliding block maximum to a value of the temproal
+#' covariate. If too long, the vector will cut off accordingly.
+#'  To be provided if you assume the distribution of your
 #'  data to be non-stationary and want to fit parameters accordingly.
 #'
 #' @return Returns a nested tibble with columns `Station` and `uniq_data`:
@@ -78,6 +82,9 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
 
   # if temporal covariate is used
   if(!is.null(temp_cvrt)) {
+    nsl <- nrow(data) - blcksz +1
+    if(!length(temp_cvrt) == nsl) { temp_cvrt[1:nsl] }
+
     data %>% dplyr::group_by(Station) %>%
       tidyr::nest() %>%
       dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
