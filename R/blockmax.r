@@ -8,8 +8,13 @@
 #' @param r the block length parameter
 #' @param method either `disjoint` or `sliding`
 #'
+#' @details If the length of `data` is not a multiple of the block length `r`,
+#' the last block maximum returned when using the `disjoint`-method is the maximum
+#' of the remaining \eqn{(\lfloor n/r\rfloor) +1) \cdot r -n)} observations, where \eqn{n}
+#' is the length of the data.
+#'
 #' @return The time series of disjoint block maxima
-#' (a vector of length \eqn{\lfloor n/r \rfloor})
+#' (a vector of length \eqn{n/r} or \eqn{\lfloor n/r \rfloor} +1, see details)
 #' or sliding block maxima
 #' (a vector of length \eqn{n-r+1})
 #' @export
