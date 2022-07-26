@@ -35,7 +35,8 @@
 #' \item{temp.cov}{A numeric vector or matrix containing temporal covariates for the
 #' data provided in `datastart` when needed to compute initial values. For more details,
 #' see the documentation of \code{\link{get_start_vals}}.}
-#' \item{type}{If you set `type  = "IF"`, coefficients will be fitted under the assumption
+#' \item{type}{
+#' If you set `type  = "IF"`, coefficients will be fitted under the assumption
 #' of constant dispersion parameter. In this case, any formulas passed concerning the location
 #' parameter will be ignored and only the formulas concerning the scale parameter will be considered. }
 #' \item{maxit, reltol ... }{Furhter components that are passed as a list to the
@@ -66,25 +67,31 @@
 #' yy <- data.frame(ExampleData) %>%
 #'       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
 #' ##############################
-#' bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST)
+#' bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST, looplastblock = FALSE)
 #' # disjoint block maxima are used for computing starting values:
 #' djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
 #' fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
 #'               scale.sp.form = ~ lon +lat,
 #'               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
 #'               datastart = djbm, st_val_meth = "LeastSqTemp",
-#'               temp.cov = tempcv$smoothedGMST)
+#'               temp.cov = tempcv$smoothedGMST, return_hess = TRUE)
 #'
 #'
-fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
+fit_spgev_sl <- function(data, loc.sp.form = ~ 1, scale.sp.form = ~ 1,
                          loc.temp.form = NULL, scale.temp.form = NULL,
                          spat.cov, start_vals = NULL, datastart = NULL, use_gr = FALSE,
                          method = "BFGS", st_val_meth = "LeastSq", print_start_vals = TRUE,
-                         scale.link = make.link("log"), ...){
+                         scale.link = make.link("log"),
+                         return_hessian = FALSE, ...){
 
   add.args <- list(...)
 
   d.dat <- nrow(data)
+
+  if(d.dat == 1 & missing(spat.cov)) {
+    spat.cov <- data.frame(lon = 1)
+  }
+
   n.spat <- nrow(spat.cov)
 
   if (d.dat != n.spat) {
@@ -135,12 +142,13 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
   if(exists("type", where = add.args)) {
 
     add.args <- add.args[!(names(add.args) == "type")]
-    mlest <- optim(start_vals, fn = nll_spat_temp_sl_hom,
-                   scale.sp.form = scale.sp.form,
-                   scale.temp.form = scale.temp.form,
-                   dataprep = dataprep, spat.cov = spat.cov,
-                   scale.link = scale.link,
-                   method = method, control = add.args)
+
+   mlest <- optim(start_vals, fn = nll_spat_temp_sl_hom,
+                 scale.sp.form = scale.sp.form,
+                 scale.temp.form = scale.temp.form,
+                 dataprep = dataprep, spat.cov = spat.cov,
+                 scale.link = scale.link,
+                 method = method, control = add.args)
   }
   else{
     mlest <- optim(start_vals, fn = nll_spat_temp_sl_prep,
@@ -149,14 +157,20 @@ fit_spgev_sl <- function(data, loc.sp.form, scale.sp.form,
                    loc.temp.form = loc.temp.form, scale.temp.form = scale.temp.form,
                    dataprep = dataprep, spat.cov = spat.cov,
                    scale.link = scale.link,
-                   method = method, control = add.args)
+                   method = method, control = add.args, hessian = return_hessian)
   }
 
   if(!(mlest$convergence == 0)) {
     warning("Optimization did not succeed. Try increasing the maximum number of iterations or try a different method for finding starting values.")
   }
 
-  list(mle = mlest$par, nllh = mlest$value, conv = mlest$convergence, counts = mlest$counts)
+  if(!return_hessian) {
+    list(mle = mlest$par, nllh = mlest$value, conv = mlest$convergence, counts = mlest$counts)
+  }
+  else {
+    list(mle = mlest$par, nllh = mlest$value, conv = mlest$convergence, counts = mlest$counts,
+         hessian = mlest$hessian)
+  }
 
 }
 

@@ -73,7 +73,7 @@ and their respective frequency of occurence. This is done with the function
 ```{r}
 yy <- data.frame(ExampleData) %>%
       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
-bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST)
+bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST, looplastblock = FALSE)
 bmuniq
 bmuniq[1, ]$uniq_data
 ```

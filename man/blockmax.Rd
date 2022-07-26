@@ -4,7 +4,7 @@
 \alias{blockmax}
 \title{Compute Disjoint or Sliding Block Maxima of a Univariate Time Series}
 \usage{
-blockmax(data, r, method = c("disjoint", "sliding"))
+blockmax(data, r, method = c("disjoint", "sliding"), looplastblock = FALSE)
 }
 \arguments{
 \item{data}{a vector of length n representing the time series}
@@ -12,6 +12,11 @@ blockmax(data, r, method = c("disjoint", "sliding"))
 \item{r}{the block length parameter}
 
 \item{method}{either \code{disjoint} or \code{sliding}}
+
+\item{looplastblock}{logical; applies only when method is 'sliding'. If TRUE (not the default)
+the first disjoint block of observations is concatenated to the last disjoint block of observations
+in order to give each observation the same
+chance to appear repeatedly in the sliding block maxima sample.}
 }
 \value{
 The time series of disjoint block maxima

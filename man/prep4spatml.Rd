@@ -55,7 +55,7 @@ yy <- data.frame(xx) \%>\% tidyr::pivot_longer( 1:2, names_to = "Station", value
 # define a temporal covariate that is constant over a block of length blcksz
 temp_cvrt <- rep(1:10/10, each = blcksz)[1:(9*blcksz + 1)]
 
-bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt)
+bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt, looplastblock = FALSE)
 ###############################
 
 prep4spatml(loc.sp.form = ~ lon, scale.sp.form = ~ lon +lat,

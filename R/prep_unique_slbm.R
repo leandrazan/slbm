@@ -15,6 +15,10 @@
 #' covariate. If too long, the vector will cut off accordingly.
 #'  To be provided if you assume the distribution of your
 #'  data to be non-stationary and want to fit parameters accordingly.
+#'  @param looplastblock logical; whether or not the first disjoint block of observations is
+#'  concatenated to the last disjoint block of observations when computing the sample of sliding
+#'  block maxima. Because of stationarity issues, this should only be used when
+#'  sample is assumed to be stationary.
 #'
 #' @return Returns a nested tibble with columns `Station` and `uniq_data`:
 #' for each station, `uniq_data` contains a tibble with columns `slbm`, `temp_cvrt`
@@ -78,7 +82,7 @@
 # }
 
 ### TO DO : FIX
-get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
+get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL, looplastblock = FALSE){
 
   # if temporal covariate is used
   if(!is.null(temp_cvrt)) {
@@ -88,20 +92,20 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
     data %>% dplyr::group_by(Station) %>%
       tidyr::nest() %>%
       dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
-        bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
+        bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
         bmx <- data.frame(slbm = bmx, temp_cvrt = temp_cvrt)
         bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
-          dplyr::summarise(n  = n(), .groups = "drop") } )) %>%
+          dplyr::summarise(n  = dplyr::n(), .groups = "drop") } )) %>%
       dplyr::ungroup() %>%
       dplyr::select(-data)
   } else {
     data %>% dplyr::group_by(Station) %>%
       tidyr::nest() %>%
       dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
-        bmx <- blockmax(.x$Obs, r =blcksz, "sliding")
+        bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
         bmx <- data.frame(slbm = bmx)
         bmx %>%  dplyr::group_by(slbm) %>%
-          dplyr::summarise(n  = n()) } )) %>%
+          dplyr::summarise(n  = dplyr::n()) } )) %>%
       dplyr::ungroup() %>%
       dplyr::select(-data)
   }
@@ -160,7 +164,7 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL){
 #' # define a temporal covariate that is constant over a block of length blcksz
 #' temp_cvrt <- rep(1:10/10, each = blcksz)[1:(9*blcksz + 1)]
 #'
-#' bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt)
+#' bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt, looplastblock = FALSE)
 #'###############################
 #'
 #' prep4spatml(loc.sp.form = ~ lon, scale.sp.form = ~ lon +lat,
@@ -216,5 +220,4 @@ prep4spatml <- function(loc.sp.form, scale.sp.form,
 
   list( data = data, MatLocSp = model.loc.sp, MatScaleSp = model.scale.sp)
 }
-
 

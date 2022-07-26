@@ -6,8 +6,8 @@
 \usage{
 fit_spgev_sl(
   data,
-  loc.sp.form,
-  scale.sp.form,
+  loc.sp.form = ~1,
+  scale.sp.form = ~1,
   loc.temp.form = NULL,
   scale.temp.form = NULL,
   spat.cov,
@@ -18,6 +18,7 @@ fit_spgev_sl(
   st_val_meth = "LeastSq",
   print_start_vals = TRUE,
   scale.link = make.link("log"),
+  return_hessian = FALSE,
   ...
 )
 }
@@ -60,7 +61,8 @@ Defaults to \eqn{log(\sigma) = \sigma_0 + \sigma_1 + ... }.}
 \item{temp.cov}{A numeric vector or matrix containing temporal covariates for the
 data provided in \code{datastart} when needed to compute initial values. For more details,
 see the documentation of \code{\link{get_start_vals}}.}
-\item{type}{If you set \code{type  = "IF"}, coefficients will be fitted under the assumption
+\item{type}{
+If you set \code{type  = "IF"}, coefficients will be fitted under the assumption
 of constant dispersion parameter. In this case, any formulas passed concerning the location
 parameter will be ignored and only the formulas concerning the scale parameter will be considered. }
 \item{maxit, reltol ... }{Furhter components that are passed as a list to the
@@ -94,14 +96,14 @@ spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
 yy <- data.frame(ExampleData) \%>\%
       tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
 ##############################
-bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST)
+bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST, looplastblock = FALSE)
 # disjoint block maxima are used for computing starting values:
 djbm <- apply(ExampleData, 2, blockmax, r = 90, "disjoint")
 fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
               scale.sp.form = ~ lon +lat,
               loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
               datastart = djbm, st_val_meth = "LeastSqTemp",
-              temp.cov = tempcv$smoothedGMST)
+              temp.cov = tempcv$smoothedGMST, return_hess = TRUE)
 
 
 }
