@@ -12,7 +12,7 @@
 #' @param loc.temp.form R formula definining the temporal trend for the location parameter.
 #' @param scale.temp.form R formula definining the temporal trend for the scale parameter.
 #' @param dataprep Prepared data of sliding block maxima and design matrices
-#' as obtained from \link{prep4spatml}.
+#' as obtained from \code{\link[slbm]{prep4spatml}}.
 #' @param spat.cov A data frame containing the spatial covariates used in the formulations
 #' of the spatial formulas.
 #' @param scale.link The link function that is used for modelling the scale parameter.

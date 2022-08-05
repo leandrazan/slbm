@@ -8,7 +8,9 @@ get_uniq_bm(data, blcksz, temp_cvrt = NULL, looplastblock = FALSE)
 }
 \arguments{
 \item{data}{A tibble with columns \code{Station} and \code{Obs}, where \code{Obs} contains
-measurements of the variable of interest at the Station referenced by \code{Station}.}
+measurements of the variable of interest at the Station referenced by \code{Station}.
+If dealing with observations from one station only (univariate case), it can also be a
+vector containing the observations.}
 
 \item{blcksz}{The blocksize for which block maxima are computed.}
 
@@ -16,7 +18,7 @@ measurements of the variable of interest at the Station referenced by \code{Stat
 containing values of a temporal
 covariate. The specific length is necessary in order to match each
 sliding block maximum to a value of the temproal
-covariate. If too long, the vector will cut off accordingly.
+covariate. If too long, the vector will be cut off accordingly.
 To be provided if you assume the distribution of your
 data to be non-stationary and want to fit parameters accordingly.
 @param looplastblock logical; whether or not the first disjoint block of observations is
@@ -30,6 +32,8 @@ for each station, \code{uniq_data} contains a tibble with columns \code{slbm}, \
 (if considered)
 and \code{n}, with the unqiue values of sliding block maxima (and temporal covariate)
 along with the respective frequency.
+In the univariate case, a tibble containing the unique values and their frequency
+(and, if considered, the corresponding value of the temporal covariate) is returned.
 }
 \description{
 Compute stationwise unique sliding block maxima and their respective
@@ -50,5 +54,4 @@ temp_cvrt <- rep(1:10/10, each = blcksz)[1:(9*blcksz + 1)]
 
 ##### apply function #####
 bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt )
-
 }

@@ -22,7 +22,7 @@ prep4spatml(
 
 \item{scale.temp.form}{R formula definining the temporal trend for the scale parameter.}
 
-\item{data}{A nested tibble as obtained from \link{get_uniq_bm}.}
+\item{data}{A nested tibble as obtained from \code{\link[slbm]{get_uniq_bm}}.}
 
 \item{spat.cov}{A data frame containing the spatial covariates used in the formulations
 of the spatial formulas.}

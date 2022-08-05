@@ -5,7 +5,7 @@
 #' Each column contains measurements of a station.
 #'
 #' @details
-#' The example data was generated using the \code{\link{sim_spatial}}
+#' The example data was generated using the \code{\link[slbm]{sim_spatial}}
 #' function as follows:
 #'
 #' @examples

@@ -6,7 +6,7 @@
 #' @return value of check function
 #' @export
 #'
-#' @examples
+#' @examples check_fun(2, 0.9)
 check_fun <- function( u, p){
   if( p < 0 | p > 1){stop("p is a probability (i.e. between 0 and 1")}
   ifelse( u  > 0 , p*u, (p-1)*u)

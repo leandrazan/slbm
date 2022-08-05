@@ -7,12 +7,14 @@
 #'
 #' @param data A tibble with columns `Station` and `Obs`, where `Obs` contains
 #' measurements of the variable of interest at the Station referenced by `Station`.
+#' If dealing with observations from one station only (univariate case), it can also be a
+#' vector containing the observations.
 #' @param blcksz The blocksize for which block maxima are computed.
 #' @param temp_cvrt Optional; a numeric vector of length `nrow(data) - blcksz +1`
 #' containing values of a temporal
 #' covariate. The specific length is necessary in order to match each
 #' sliding block maximum to a value of the temproal
-#' covariate. If too long, the vector will cut off accordingly.
+#' covariate. If too long, the vector will be cut off accordingly.
 #'  To be provided if you assume the distribution of your
 #'  data to be non-stationary and want to fit parameters accordingly.
 #'  @param looplastblock logical; whether or not the first disjoint block of observations is
@@ -25,7 +27,8 @@
 #' (if considered)
 #' and `n`, with the unqiue values of sliding block maxima (and temporal covariate)
 #' along with the respective frequency.
-#'
+#' In the univariate case, a tibble containing the unique values and their frequency
+#' (and, if considered, the corresponding value of the temporal covariate) is returned.
 #' @export
 #'
 #' @examples
@@ -41,89 +44,69 @@
 #'
 #' ##### apply function #####
 #' bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt )
-#'
-# get_uniq_bm <- function(data, blcksz, temp.cov = NULL, tempvar = NULL){
-#
-#   if(!is.null(temp.cov)) {
-#
-#     ndata <- ncol(data)
-#
-#     bmx <- apply(data[ , 2:ndata],2,  blockmax, r = blcksz, "sliding")
-#     bmx <- bmx %>% dplyr::bind_cols(Datetime = data[1:nrow(bmx), 1])
-#
-#     bmx <- bmx %>% dplyr::right_join(temp.cov, by = c("Datetime"))
-#
-#     bmx <- bmx %>% tidyr::pivot_longer( 1:(ndata-1),
-#                                  names_to = "Station", values_to = "slbm") %>%
-#       dplyr::select(-Datetime)
-#
-#     nametempcvrt <- names(bmx %>% select( {{ tempvar }}))
-#     bmx <- rename(bmx, "temp_cvrt" = nametempcvrt )
-#
-#
-#     bmx %>% dplyr::group_by(Station, slbm, temp_cvrt ) %>%
-#       dplyr::summarise( n = n(), .groups = "drop") %>%
-#       dplyr::group_by(Station) %>%
-#       tidyr::nest(uniq_data = c(slbm, temp_cvrt, n)) %>%
-#       dplyr::ungroup()
-#
-#
-#   } else {
-#     data %>% dplyr::group_by(Station) %>%
-#       tidyr::nest() %>%
-#       dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
-#         bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
-#         bmx <- data.frame(slbm = bmx)
-#         bmx %>%  dplyr::group_by(slbm) %>%
-#           dplyr::summarise(n  = n()) } )) %>%
-#       dplyr::ungroup() %>%
-#       dplyr::select(-data)
-#   }
-# }
-
-### TO DO : FIX
+### TO DO : treat the case when not all stations have the same record lengths.
+### fill with NA in observational data
 get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL, looplastblock = FALSE){
 
-  # if temporal covariate is used
-  if(!is.null(temp_cvrt)) {
-    nsl <- nrow(data) - blcksz +1
-    if(!length(temp_cvrt) == nsl) { temp_cvrt[1:nsl] }
+  if(is.vector(data)) {
+    data <- data.frame(Obs = data, Station = "X1")
+    # if temporal covariate is used
+    if(!is.null(temp_cvrt)) {
+      nsl <- nrow(data) - blcksz +1
+      if(!length(temp_cvrt) == nsl) { temp_cvrt <- temp_cvrt[1:nsl] }
 
-    data %>% dplyr::group_by(Station) %>%
-      tidyr::nest() %>%
-      dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
-        bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
-        bmx <- data.frame(slbm = bmx, temp_cvrt = temp_cvrt)
-        bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
-          dplyr::summarise(n  = dplyr::n(), .groups = "drop") } )) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(-data)
-  } else {
-    data %>% dplyr::group_by(Station) %>%
-      tidyr::nest() %>%
-      dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
-        bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
-        bmx <- data.frame(slbm = bmx)
-        bmx %>%  dplyr::group_by(slbm) %>%
-          dplyr::summarise(n  = dplyr::n()) } )) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(-data)
+      (data %>% dplyr::group_by(Station) %>%
+        tidyr::nest() %>%
+        dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
+          bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
+          bmx <- data.frame(slbm = bmx, temp_cvrt = temp_cvrt)
+          bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
+            dplyr::summarise(n  = dplyr::n(), .groups = "drop") } )) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-data))$uniq_data[[1]]
+    } else {
+      (data %>% dplyr::group_by(Station) %>%
+        tidyr::nest() %>%
+        dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
+          bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
+          bmx <- data.frame(slbm = bmx)
+          bmx %>%  dplyr::group_by(slbm) %>%
+            dplyr::summarise(n  = dplyr::n()) } )) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-data))$uniq_data[[1]]
+    }
+    }
+
+  # if temporal covariate is used
+  else {
+    if(!is.null(temp_cvrt)) {
+
+      data <- data %>% dplyr::group_by(Station) %>%
+        tidyr::nest()
+      nsl <- nrow(data[1, ]$data[[1]]) - blcksz +1
+      if(!length(temp_cvrt) == nsl) { temp_cvrt <- temp_cvrt[1:nsl] }
+
+      data  %>%
+        dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
+          bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
+          bmx <- data.frame(slbm = bmx, temp_cvrt = temp_cvrt)
+          bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
+            dplyr::summarise(n  = dplyr::n(), .groups = "drop") } )) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-data)
+    } else {
+      data %>% dplyr::group_by(Station) %>%
+        tidyr::nest() %>%
+        dplyr::mutate( uniq_data  = purrr::map( .x =data, .f = function(.x){
+          bmx <- blockmax(.x$Obs, r = blcksz, "sliding", looplastblock = looplastblock)
+          bmx <- data.frame(slbm = bmx)
+          bmx %>%  dplyr::group_by(slbm) %>%
+            dplyr::summarise(n  = dplyr::n()) } )) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-data)
+    }
   }
 }
-
-  # if temporal covariate is used
-  # if(!is.null(temp_cvrt)) {
-  #   data %>% dplyr::group_by(Station) %>%
-  #     tidyr::nest() %>%
-  #     dplyr::mutate( uniq_data  = purrr::map( .x = data, .f = function(.x){
-  #       bmx <- blockmax(.x$Obs, r = blcksz, "sliding")
-  #       .temp_cvrt <- temp_cvrt %>% dplyr::filter(Index %in% .x$Datetime)
-  #       bmx <- data.frame(slbm = bmx, temp_cvrt = .temp_cvrt$smoothed[1:length(slbm), 1])
-  #       bmx %>%  dplyr::group_by(slbm, temp_cvrt) %>%
-  #         dplyr::summarise(n  = n(), .groups = "drop") } )) %>%
-  #     dplyr::ungroup() %>%
-  #     dplyr::select(-data)
-  # }
 
 
 
@@ -137,7 +120,7 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL, looplastblock = FALSE){
 #' @param scale.sp.form R formula definining the spatial model for the scale parameter.
 #' @param loc.temp.form R formula definining the temporal trend for the location parameter.
 #' @param scale.temp.form R formula definining the temporal trend for the scale parameter.
-#' @param data A nested tibble as obtained from \link{get_uniq_bm}.
+#' @param data A nested tibble as obtained from \code{\link[slbm]{get_uniq_bm}}.
 #' @param spat.cov A data frame containing the spatial covariates used in the formulations
 #' of the spatial formulas.
 #'

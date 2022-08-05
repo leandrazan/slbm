@@ -17,3 +17,6 @@ value of check function
 \description{
 Check function for evaluating an estimated quantile
 }
+\examples{
+check_fun(2, 0.9)
+}

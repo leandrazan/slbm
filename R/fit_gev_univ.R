@@ -1,9 +1,10 @@
 
 # params is a vector of length 4
-nll_univ_trend <- function(params,
+nll_univ <- function(params,
                       data, type){
 
-  if(!(type %in% c("scale", "shift"))) { stop("Type must be one of 'shift', 'scale'.")}
+  if(!(type %in% c("scale", "shift", "stationary"))) { stop("Type must be one of 'shift',
+                                                            'scale' or 'stationary'.")}
   n.dat <- nrow(data)
 
   if(type == "scale") {
@@ -60,6 +61,30 @@ nll_univ_trend <- function(params,
       }
     }
   }
+  if(type == "stationary") {
+
+    mu <- params[1]
+    sigma <- params[2]
+    xi <- params[3]
+
+    if(sigma <= 0) {return(1e+10)}
+    else {
+
+      if(abs(xi) < 1e-8){
+        z <- exp( -(data$slbm - mu)/sigma)
+
+        loglik <-  sum( data$n * (log(sigma) + log(z) + z) , na.rm = TRUE)
+      }
+      else{
+        z <- 1 + xi*(data$slbm - mu)/sigma
+        if(any(z < 0, na.rm = TRUE)){ loglik <- 1e+10}
+        else{
+          loglik <- sum(data$n*( log(sigma) + (1/xi +1)*log(z) + z^(-1/xi)),
+                        na.rm = TRUE)
+        }
+      }
+    }
+  }
   loglik
 }
 
@@ -70,7 +95,7 @@ nll_univ_trend <- function(params,
 #' to univariate data
 #' @param data A tibble containing values of the unique sliding BM along with the
 #' corresponding value of the temporal covariate and the frequency of occurence of
-#' the respective tupel. Can be obtained by applying \code{\link{get_uniq_bm()}}.
+#' the respective tupel. Can be obtained by applying \code{\link[slbm]{get_uniq_bm}}.
 #' @param method The method used during optimisation; passed to optim.
 #' @param maxiter Passed to optim.
 #' @param hessian logical; whether to return the hessian matrix.
@@ -92,32 +117,34 @@ nll_univ_trend <- function(params,
 #'
 #' @examples
 #' #' ##### generate some data #####
+#' set.seed(1)
 #' blcksz <- 90
 #' xx <- evd::rgpd(100*90, shape = 0.2)
-#'
-#' yy <- data.frame(Station = "X1", Obs = xx)
 #'
 #' # define a temporal covariate that is constant over a block of length blcksz
 #' temp_cvrt <- rep(1:100/100, each = blcksz)[1:(99*blcksz + 1)]
 #'
-#' bms <- get_uniq_bm(yy, blcksz, temp_cvrt = temp_cvrt, looplastblock = FALSE)
-#' bms <- bms$uniq_data[[1]]
+#' bms <- get_uniq_bm(xx, blcksz, temp_cvrt = temp_cvrt, looplastblock = FALSE)
 #' bms
 #'###############################
-#' fit_gev_univ_trend(data = bms, hessian = TRUE, type = "shift")
-#'
-fit_gev_univ_trend <- function(data, method = "BFGS", maxiter = 100,
+#' fit_gev_univ(data = bms, hessian = TRUE, type = "shift")
+#' fit_gev_univ(data = bms, hessian = TRUE, type = "stationary")
+
+fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
                          hessian = FALSE, type) {
 
   start_st <-  evd::fgev(as.vector(data$slbm), std.err = FALSE)$estimate
-  start_vals <- c(start_st[1], start_st[2], start_st[3], 0)
-
-  if( type == "scale") {names(start_vals) <- c("mu0", "sigma0", "gamma", "alpha")}
+  if(type == "stationary") {
+    start_vals <- c(start_st[1], start_st[2], start_st[3])
+    names(start_vals) <- c("loc", "scale", "shape")
+  }
   else {
-    names(start_vals) <- c("loc0", "scale0", "shape", "tempLoc1")
+    start_vals <- c(start_st[1], start_st[2], start_st[3], 0)
+    if(type == "scale") {names(start_vals) <- c("mu0", "sigma0", "gamma", "alpha")}
+    else { names(start_vals) <- c("loc0", "scale0", "shape", "tempLoc1")}
   }
   #print(start_vals)
-  mlest <- optim(start_vals, fn = nll_univ_trend,
+  mlest <- optim(start_vals, fn = nll_univ,
                  data = data,
                  method = method, control = list(maxit = maxiter),
                  hessian = hessian, type = type)

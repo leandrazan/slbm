@@ -24,7 +24,8 @@ MDAdata(
 \item{shape}{The shape parameter of the chosen marginal distribution.}
 }}
 
-\item{ms}{A list with components that are passed to \code{\link[SpatialExtremes]{rmaxstab}}:
+\item{ms}{A list with components that are passed to \code{rmaxstab} from the
+\code{SpatialExtremes}-package:
 \describe{
 \item{kovmod}{The covariance model for the max-stable process.}
 \item{nugget, range, smooth}{The nugget, range and smooth parameters.}

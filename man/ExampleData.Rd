@@ -15,7 +15,7 @@ ExampleData
 Synthetic example dataset of \code{daily} observations at 8 stations.
 }
 \details{
-The example data was generated using the \code{\link{sim_spatial}}
+The example data was generated using the \code{\link[slbm]{sim_spatial}}
 function as follows:
 }
 \examples{

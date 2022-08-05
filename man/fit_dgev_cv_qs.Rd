@@ -23,7 +23,7 @@ fit_dgev_cv_qs(
 )
 }
 \arguments{
-\item{agg_bm}{Tibble as obtained from the output of \code{\link[=get_agg_bm()]{get_agg_bm()()}}.}
+\item{agg_bm}{Tibble as obtained from the output of \code{get_agg_bm()}.}
 
 \item{conc_bm}{Tibble of sliding block maxima for all possible combinations of
 years/seasons that are consecutive after removing observations from a year/season

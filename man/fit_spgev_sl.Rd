@@ -24,7 +24,8 @@ fit_spgev_sl(
 }
 \arguments{
 \item{data}{A nested tibble containing the unique sliding block maxima and their
-frequency for the considered locations as obtained from the function \link{get_uniq_bm}.}
+frequency for the considered locations as obtained from the function
+\code{\link[slbm]{get_uniq_bm}}.}
 
 \item{loc.sp.form}{R formula definining the spatial model for the location parameter.}
 
@@ -38,7 +39,8 @@ frequency for the considered locations as obtained from the function \link{get_u
 of the spatial formulas.}
 
 \item{start_vals}{Optional; a vector containing initial values for the log Likelihood
-which is to be optimised. If omitted, initial values are computed with \code{\link{get_start_vals()}}.}
+which is to be optimised. If omitted, initial values are computed with
+\code{\link[slbm]{get_start_vals}}.}
 
 \item{datastart}{The data matrix on which starting values will be computed if
 none are passed in \code{start_vals}.}
@@ -60,7 +62,7 @@ Defaults to \eqn{log(\sigma) = \sigma_0 + \sigma_1 + ... }.}
 \describe{
 \item{temp.cov}{A numeric vector or matrix containing temporal covariates for the
 data provided in \code{datastart} when needed to compute initial values. For more details,
-see the documentation of \code{\link{get_start_vals}}.}
+see the documentation of \code{\link[slbm]{get_start_vals}}.}
 \item{type}{
 If you set \code{type  = "IF"}, coefficients will be fitted under the assumption
 of constant dispersion parameter. In this case, any formulas passed concerning the location

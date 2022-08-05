@@ -86,10 +86,10 @@ Currently, with this method, a trend in the scale parameter is not considered.
 }
 \item{spatialGEV}{
 This method computes initial valus with the function
-\code{\link[spatialExtremes]{fitspatgev}} of the \code{spatialExtremes} package.
+\code{fitspatgev} of the \code{spatialExtremes} package.
 With this method, initial coefficients for all spatial and temporal covariates
 can be computed.
-Since \code{\link[spatialExtremes]{fitspatgev}} does not support link functions,
+Since \code{fitspatgev} does not support link functions,
 the use of any other link function than the identitiy function
 when the scale parameter depends on any covariate is not recommended.
 }

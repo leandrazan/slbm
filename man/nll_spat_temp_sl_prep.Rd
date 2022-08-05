@@ -28,7 +28,7 @@ is to be computed. See details.}
 \item{scale.temp.form}{R formula definining the temporal trend for the scale parameter.}
 
 \item{dataprep}{Prepared data of sliding block maxima and design matrices
-as obtained from \link{prep4spatml}.}
+as obtained from \code{\link[slbm]{prep4spatml}}.}
 
 \item{spat.cov}{A data frame containing the spatial covariates used in the formulations
 of the spatial formulas.}

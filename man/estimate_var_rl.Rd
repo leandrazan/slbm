@@ -4,20 +4,22 @@
 \alias{estimate_var_rl}
 \title{Estimate Variance of RL estimation}
 \usage{
-estimate_var_rl(theta, Tyrl, type, ref_gmst, Covmat)
+estimate_var_rl(theta, Tyrl, type, ref_gmst = NULL, Covmat)
 }
 \arguments{
 \item{theta}{A named of parameter estimates in the order:
 constant part of location parameter, constant part of scale parameter, shape parameter,
 trend parameter.}
 
-\item{Tyrl}{The period for which the variance of the corresponding Return Level is to be estimated.}
+\item{Tyrl}{The period for which the variance of the corresponding Return Level is to be
+estimated.}
 
-\item{type}{One of 'scale', 'shift', depending whether the model assumes a scale or a shift
-of observations with respect to the temporal covariate.}
+\item{type}{One of 'scale', 'shift', or 'stationary', depending whether the model assumes
+a scale, a shift or stationary behaviour of observations with respect to the temporal covariate.}
 
 \item{ref_gmst}{A numeric vector giving reference values of the temporal covariate
-at which the variance of the corresponding RL is estimated.}
+at which the variance of the corresponding RL is estimated, or \code{NULL} when stationarity
+is assumed.}
 
 \item{Covmat}{The (estimated) covariance matrix of the parameter vector \code{theta}.}
 }
@@ -33,15 +35,13 @@ xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
 ## temporal covariate for sliding BM
 temp_cvrt <- rep(1:100/100, each = 90)[1:8911]
 
-## compute sample of uniuqe sliding BM
-yy <- data.frame( Obs = xx, Station = "X1")
-bms <- get_uniq_bm(yy, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
-bms <- bms[1, ]$uniq_data[[1]]
+## compute sample of unique sliding BM
+bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
 
 ## full sample of sliding for estimaing the covariance matrix
 slbm <- blockmax(xx, r = 90, "sliding")
-estim <- fit_gev_univ_trend(data = bms, type = "shift", hessian = TRUE)
-covest <- est_var_wtrend(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
+estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
+covest <- est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
 varmeth = "V2", type = "shift")
 
 ## define reference value of temporal covariate
@@ -50,8 +50,24 @@ reft <- 0.8
 ## location parameter and 100-year RL in that climate
 loctr <- estim$mle[1] + estim$mle[4]*reft
 rlhat <- evd::qgev(1-1/100, loc = loctr, scale = estim$mle[2], shape = estim$mle[3])
-
+rlhat
 estimate_var_rl(estim$mle, Tyrl = 100, type = "shift", ref_gmst = reft, Covmat = covest$V)
 
+
+#### assuming stationarity
+xx <- evd::rgpd(90*100, shape = 0.2)
+
+## compute sample of unique sliding BM
+bms <- get_uniq_bm(xx, 90, looplastblock = TRUE)
+
+## full sample of sliding for estimaing the covariance matrix
+slbm <- blockmax(xx, r = 90, "sliding")
+estim <- fit_gev_univ(data = bms, type = "stationary", hessian = TRUE)
+covest <- est_var_univ(slbm, est_par = estim, blcksz = 90, varmeth = "V2", type = "stationary")
+
+# estimated 100-year RL
+rlhat <- evd::qgev(1-1/100, loc = estim$mle[1], scale = estim$mle[2], shape = estim$mle[3])
+rlhat
+estimate_var_rl(estim$mle, Tyrl = 100, type = "stationary", Covmat = covest$V)
 
 }
