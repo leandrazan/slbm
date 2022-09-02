@@ -9,9 +9,9 @@ nll_univ <- function(params,
 
   if(type == "scale") {
 
-    mu0 <- c("mu0" = params[1])
-    sigma0 <- c("sigma0" = params[2])
-    gamma0 <- c("gamma" = params[3])
+    mu0 <- c("mu" = params[1])
+    sigma0 <- c("sigma" = params[2])
+    gamma0 <- c("shape" = params[3])
     alpha0 <- c("alpha" = params[4])
 
     if(sigma0 <= 0) {return(1e+10)}
@@ -108,9 +108,9 @@ nll_univ <- function(params,
 #' @details The argument given in type determines whether the observations shift or scale
 #' with time. For a temporal covariate \eqn{(X_t)_t}, shifting corresponds to a shift
 #' in the location parameter as follows:
-#' \deqn{ \mu(t) = \mu_0 + \mu_1 X_t , \sigma(t) = \sigma_0, \gamma(t) = \gamma}
+#' \deqn{ \mu(t) = \mu + \alpha X_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
 #' while scaling corresponds to the model where
-#' \deqn{ \mu(t) = \mu_0 \exp(\alpha X_t /\mu_0),  \sigma(t) = \sigma_0 \exp(\alpha X_t /\mu_0),
+#' \deqn{ \mu(t) = \mu \exp(\alpha X_t /\mu),  \sigma(t) = \sigma  \exp(\alpha X_t /\mu),
 #' \gamma(t) = \gamma,
 #' }
 #' as inspired by the Clausius-Clapeyron relation.
@@ -140,8 +140,8 @@ fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
   }
   else {
     start_vals <- c(start_st[1], start_st[2], start_st[3], 0)
-    if(type == "scale") {names(start_vals) <- c("mu0", "sigma0", "gamma", "alpha")}
-    else { names(start_vals) <- c("loc0", "scale0", "shape", "tempLoc1")}
+    if(type == "scale") {names(start_vals) <- c("mu", "sigma", "shape", "alpha")}
+    else { names(start_vals) <- c("mu", "sigma", "shape", "alpha")}
   }
   #print(start_vals)
   mlest <- optim(start_vals, fn = nll_univ,

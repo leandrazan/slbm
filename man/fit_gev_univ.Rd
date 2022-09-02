@@ -32,9 +32,9 @@ to univariate data
 The argument given in type determines whether the observations shift or scale
 with time. For a temporal covariate \eqn{(X_t)_t}, shifting corresponds to a shift
 in the location parameter as follows:
-\deqn{ \mu(t) = \mu_0 + \mu_1 X_t , \sigma(t) = \sigma_0, \gamma(t) = \gamma}
+\deqn{ \mu(t) = \mu + \alpha X_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
 while scaling corresponds to the model where
-\deqn{ \mu(t) = \mu_0 \exp(\alpha X_t /\mu_0),  \sigma(t) = \sigma_0 \exp(\alpha X_t /\mu_0),
+\deqn{ \mu(t) = \mu \exp(\alpha X_t /\mu),  \sigma(t) = \sigma  \exp(\alpha X_t /\mu),
 \gamma(t) = \gamma,
 }
 as inspired by the Clausius-Clapeyron relation.

@@ -13,7 +13,7 @@
 #' be returned. Needed for parametric covariance estimation.
 #'
 #' @return Returns a tibble with columns `Station`, `Kblockind`,`uniq_data` and, if `returnfullsamp  = TRUE`,
-#' `ful_data`. These are the station reference, the block index of the blocks of size `K` times `blcksz`,
+#' `full_data`. These are the station reference, the block index of the blocks of size `K` times `blcksz`,
 #' the sample of unique sliding block maxima values and their frequency and the looped sliding block maxima.
 #' @export
 #'
@@ -172,6 +172,15 @@ compute_rl <- function(theta, Tyrl, type, ref_gmst = NULL) {
 #' @param varmeth The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.
 #'
 #' @return A list containing
+#'
+#' * `est_boot` the parameter estimates of the bootstrap sample
+#' and one or both of the following:
+#' * `estvarV` the estimated covariance matrix of the parameter estimates (method 1)
+#' * `estvarV2` the estimated covariance matrix of the parameter estimates (method 1)
+#'
+#' when \code{stimate_RL = FALSE}. If \code{estimate_RL = TRUE}, a list with the following
+#' components is returned:
+#'
 #' * `rlboot` the estimated RLs
 #' and one or both of the following:
 #' * `rlvarV` the estimated variances of the RLs (method 1)
@@ -205,12 +214,20 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
   # the ML estimator based on weighted log-Likelihood computed on the bootstrap sample
   est_boot <-  slbm::fit_gev_univ(data = boot_samp, hessian = TRUE, type  = type )
 
+  ## estimate the covariance matrix of the parameter estimates
+  if(type == "shift") {
 
-  estvar <- slbm::est_var_univ(orig_slbm = slorig$slbm, est_par = est_boot, blcksz = blcksz,
-                               temp.cov = slorig$temp_cvrt, type = type,  varmeth = varmeth)
+    estvar <- slbm::est_var_univ_shift(orig_slbm = slorig$slbm, est_par = est_boot,
+                                       blcksz = blcksz, temp.cov = slorig$temp_cvrt,
+                                       temp.cov.dj = slorig$temp_cvrt,
+                                       varmeth = varmeth)
+  } else {
+    estvar <- slbm::est_var_univ(orig_slbm = slorig$slbm, est_par = est_boot, blcksz = blcksz,
+                                       temp.cov = slorig$temp_cvrt, type = type,  varmeth = varmeth)
+  }
 
-  if(!estimate_RL) {
-    return(list(est_boot = est_boot, estvarV = estvar$V, estvarV2 = estvar$V2))
+  if(estimate_RL == FALSE) {
+   return(append( est_boot, estvar))
   }
   else {
 
@@ -229,11 +246,24 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
                                        ref_gmst = ref_gmst, Covmat = estvar$V),
                refGMST = ref_gmst, Year = .x) })
     }
-    if(varmeth == "V") {
-      return(list(rl_boot = rlhat,  rlvarV = varrl_V))
+    if(isTRUE(estimate_RL)) {
+      if(varmeth == "V") {
+        return(list(rl_boot = rlhat,  rlvarV = varrl_V))
+      }
+      if(varmeth == "V2") { return(list(rl_boot = rlhat, rlvarV2 = varrl_V2)) }
+      else {return(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2)) }
     }
-    if(varmeth == "V2") { return(list(rl_boot = rlhat, rlvarV2 = varrl_V2)) }
-    else {return(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2)) }
+    else if(estimate_RL == "both") {
+
+        boot_parameters <- append(est_boot, estvar)
+
+        if(varmeth == "V") {
+          return(append(list(rl_boot = rlhat,  rlvarV = varrl_V), boot_parameters))
+        }
+        if(varmeth == "V2") { return(append(list(rl_boot = rlhat, rlvarV2 = varrl_V2), boot_parameters)) }
+        else {return(append(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2), boot_parameters)) }
+
+    }
 
   }
 
@@ -254,12 +284,13 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #' @param type One of 'stationary', 'shift' or 'scale'.
 #' @param scale.link Link function. Not implemented atm.
 #' @param reltol Passed to optim.
-#' @param estimate_RL Must be TRUE. Not implemented atm (when interested in GEV
-#' parameters rather than RLs)
+#' @param estimate_RL One of \code{TRUE, FALSE} or \code{"both"}. If \code{FALSE},
+#' only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
+#' If \code{"both"}, both parameter and RL estimates are computed.
 #' @param Tyrl The return periods for which RLs are estimated
 #' @param ref_gmst Vector of reference values of the temporal covariate for which
 #' RLs are estimated. Ignored when type is 'stationary'.
-#' @param varmeth The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.
+#' @param varmeth The method used to estimate the covariance matrix of GEV parameters: 'V', 'V2', or 'both'.
 #'
 #' @return
 #' @export
@@ -267,7 +298,7 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #' @examples
 #' blcksz <- 90
 #' ny <- 100
-#' yy <-  evd::rgpd(ny*blcksz, shape = 0.2)*2*rep(1:ny/ny, each = blcksz)
+#' yy <-  evd::rgpd(ny*blcksz, shape = -0.2) + 2*rep(1:ny/ny, each = blcksz)
 #' df.yy <- data.frame(Station = "X1", Obs = yy)
 #' k <- 3
 #' ndata <- blcksz * ny
@@ -287,18 +318,18 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #' estim_lo <- slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
 #'  type = "shift", hessian = TRUE)
 #'
-#' boot_sl(
-#' sluniq = sluniq_wb,
-#' slorig = full_slbm,
-#' blcksz = blcksz,
-#' nKblocks = .nKblocks,
-#' B = 10,
-#' type = "shift",
-#' ref_gmst = (c(0.8, 0.9)),
-#' Tyrl = c(50, 100),
-#' start_vals = estim_lo$mle,
-#' scale.link = make.link("identity"),
-#' reltol = 1e-09, estimate_RL = TRUE)
+# boot_sl(
+# sluniq = sluniq_wb,
+# slorig = full_slbm,
+# blcksz = blcksz,
+# nKblocks = .nKblocks,
+# B = 10,
+# type = "shift",
+# ref_gmst = (c(0.8, 0.9)),
+# Tyrl = c(50, 100),
+# start_vals = estim_lo$mle,
+# scale.link = make.link("identity"),
+# reltol = 1e-09, estimate_RL = TRUE)
 boot_sl <- function(sluniq, slorig, nKblocks,
                     blcksz, B = 50,
                     start_vals = NULL,
@@ -324,26 +355,79 @@ boot_sl <- function(sluniq, slorig, nKblocks,
                                                  ref_gmst = ref_gmst,
                                                  varmeth = varmeth))
 
-  if(!estimate_RL) {
-    boot_parest <- purrr::map_dfr(boot_estimators, ~ tibble(
-      data.frame(t(.x$est_boot$mle), conv = .x$est_boot$conv),
-      CovestV = list(.x$estvarV), CovestV2 = list(.x$estvarV2)))
+
+
+  if(estimate_RL == FALSE) {
+   if(varmeth == "both") {
+      boot_parest <- purrr::map_dfr(boot_estimators, ~ dplyr::tibble(
+      data.frame(t(.x$mle), conv = .x$conv),
+      CovestV = list(.x$V), CovestV2 = list(.x$V2)))
+   } else if(varmeth == "V") {
+     boot_parest <- purrr::map_dfr(boot_estimators, ~ dplyr::tibble(
+       data.frame(t(.x$mle), conv = .x$conv),
+       CovestV = list(.x$V)))
+   } else {
+     boot_parest <- purrr::map_dfr(boot_estimators, ~ dplyr::tibble(
+       data.frame(t(.x$mle), conv = .x$conv),
+       CovestV2 = list(.x$V2)))
+   }
+
   }
-  else {
+  else if(estimate_RL == "both") {
+
     if(varmeth %in%  c("both", "V2")) {
       boot_parest_v2 <- purrr::map_dfr(boot_estimators, ~
-                                         dplyr::left_join(.x$rl_boot, .x$rlvarV2, by = c("refGMST", "Year")))
+                                         { resrl <- dplyr::left_join(.x$rl_boot, .x$rlvarV2,
+                                                                     by = c("refGMST", "Year"))
+                                           respars <- dplyr::tibble(
+                                            data.frame(t(.x$mle), conv = .x$conv),
+                                           CovestV = list(.x$V2))
+                                            respars %>% dplyr::bind_cols(resrl) }
+                                         )
+
+
     }
     if (varmeth %in%  c("both", "V")) {
       boot_parest_v <- purrr::map_dfr(boot_estimators, ~
-                                        dplyr::left_join(.x$rl_boot, .x$rlvarV, by = c("refGMST", "Year")))
+                                        {resrl <- dplyr::left_join(.x$rl_boot, .x$rlvarV,
+                                                                    by = c("refGMST", "Year"))
+                                          respars <- dplyr::tibble(
+                                            data.frame(t(.x$mle), conv = .x$conv),
+                                            CovestV = list(.x$V))
+                                          respars %>% dplyr::bind_cols(resrl)
+                                        }
+                                        )
     }
     if(varmeth == "both") {
-      boot_parest <- boot_parest_v2 %>% dplyr::mutate(varmeth = "V2") %>%
-        dplyr::bind_rows(boot_parest_v %>% dplyr::mutate(varmeth = "V"))
+      boot_parest <- list( resV = boot_parest_v, resV2 = boot_parest_v2)
     } else {
       boot_parest <- base::switch(varmeth, "V" = boot_parest_v,
                             "V2" = boot_parest_v2)
+    }
+  }
+  else if(isTRUE(estimate_RL)) {
+
+    if(varmeth %in%  c("both", "V2")) {
+      boot_parest_v2 <- purrr::map_dfr(boot_estimators, ~
+                                         { dplyr::left_join(.x$rl_boot, .x$rlvarV2,
+                                                                     by = c("refGMST", "Year"))
+                                          }
+      )
+
+
+    }
+    if (varmeth %in%  c("both", "V")) {
+      boot_parest_v <- purrr::map_dfr(boot_estimators, ~
+                                        { dplyr::left_join(.x$rl_boot, .x$rlvarV,
+                                                                   by = c("refGMST", "Year"))
+                                         }
+      )
+    }
+    if(varmeth == "both") {
+      boot_parest <- list( resV = boot_parest_v, resV2 = boot_parest_v2)
+    } else {
+      boot_parest <- base::switch(varmeth, "V" = boot_parest_v,
+                                  "V2" = boot_parest_v2)
     }
   }
 
@@ -388,9 +472,14 @@ errfct <- function(type) {
 #' @param Tyrl The return periods for which RLs are estimated
 #' @param ref_gmst Vector of reference values of the temporal covariate for which
 #' RLs are estimated. Ignored when type is 'stationary'.
+#' @param estimate_RL One of \code{TRUE, FALSE} or \code{"both"}. If \code{FALSE},
+#' only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
+#' If \code{"both"}, both parameter and RL estimates are computed.
+
 #' @param varmeth The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.
 #'
-#' @return A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
+#' @return When \code{estimate_RL = TRUE}:
+#'  A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
 #' \code{Kblocks} the following values:
 #'  \describe{
 #'   \item{rl}{The RL that was estimated on the concatenated Kblock-sample.
@@ -404,6 +493,10 @@ errfct <- function(type) {
 #'   \code{loc, scale, shape} for 'stationary', giving the estimated GEV parameters as estimated
 #'   on the Kblock-sample.}
 #'   }
+#'
+#'   When \code{estimate_RL = "both"}: A list containing the above tibble as list element
+#'   named \code{res_rl} as well as a tibble with confidence interval bounds for each of the
+#'   parameter vectors.
 #' @export
 #'
 #' @examples
@@ -426,7 +519,8 @@ ci_student_boot_sl <- function(yy, blcksz,
                                type = "shift",
                                scale.link = make.link("identity"),
                                Tyrl = c(50, 100), ref_gmst = c(0.8, 0.9), varmeth = "V2",
-                               looplastblock = TRUE, reltol = 1e-09) {
+                               looplastblock = TRUE, reltol = 1e-09,
+                               estimate_RL = TRUE) {
 
   # lenght of time series (of daily observations given in yy)
   ndata <- length(yy)
@@ -449,132 +543,375 @@ ci_student_boot_sl <- function(yy, blcksz,
                                         type = type), error = errfct(type))
 
 
-  rl_hat_full <- slbm::compute_rl(theta = est_sl$mle, Tyrl = Tyrl, type = type, ref_gmst = ref_gmst)
-
-  rl_hat_full <- dplyr::rename(rl_hat_full, "rlfull" = "rl")
 
 
   parest <- dplyr::tibble()
+
+  paramest <- dplyr::tibble()
+
   est_sl_df <- data.frame(t(est_sl$mle))
 
-  for(k in Kblock) {
-    # number of blocks of size K*blcksz that are observed
-    .nKblocks <- ceiling(ndata/(k*blcksz))
+
+   for(k in Kblock) {
+  # number of blocks of size K*blcksz that are observed
+  .nKblocks <- ceiling(ndata/(k*blcksz))
 
 
-    # for each observation: which Kblock does it belong to, and is it in the last
-    # block of site blcksz within that larger Kblock
-    indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
-                                          rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
-                             obsind = 1:ndata)
+  # for each observation: which Kblock does it belong to, and is it in the last
+  # block of site blcksz within that larger Kblock
+  indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
+                                        rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
+                           obsind = 1:ndata)
 
 
-    # compute the unique sliding BM within each of the
-    # nKblocks of size Kblock, their frequency and their Kblockindex
-    # (index of the bigger block of size K the sliding BM belongs to)
-    sluniq_wb <- slbm::get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
-                                  temp_cvrt = temp.cov, looplastblock = looplastblock,
-                                  returnfullsamp = TRUE)
+  # compute the unique sliding BM within each of the
+  # nKblocks of size Kblock, their frequency and their Kblockindex
+  # (index of the bigger block of size K the sliding BM belongs to)
+  sluniq_wb <- slbm::get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
+                                temp_cvrt = temp.cov, looplastblock = looplastblock,
+                                returnfullsamp = TRUE)
 
-    full_slbm_Kblock <- sluniq_wb %>% dplyr::select(-uniq_data)
-    sluniq_wb <- sluniq_wb %>% dplyr::select(-full_data)
+  full_slbm_Kblock <- sluniq_wb %>% dplyr::select(-uniq_data)
+  sluniq_wb <- sluniq_wb %>% dplyr::select(-full_data)
 
-    #  compute ML estimator
-    estim_Kblock <- tryCatch(slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
-                                                type = type, hessian = TRUE), error = errfct(type))
+  #  compute ML estimator
+  estim_Kblock <- tryCatch(slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
+                                              type = type, hessian = TRUE), error = errfct(type))
 
-    # bootstrap RLs and compute their parametric variance estimation
-    bootres <- slbm::boot_sl(
-      sluniq = sluniq_wb,
-      slorig = full_slbm_Kblock,
-      blcksz = blcksz,
-      nKblocks = .nKblocks,
-      B = B,
-      type = type,
-      ref_gmst = ref_gmst,
-      Tyrl = Tyrl,
-      start_vals = estim_Kblock$mle,
-      scale.link = make.link("identity"),
-      reltol = 1e-09, estimate_RL = TRUE)
+  # bootstrap RLs and compute their parametric variance estimation
+  bootres <- slbm::boot_sl(
+    sluniq = sluniq_wb,
+    slorig = full_slbm_Kblock,
+    blcksz = blcksz,
+    nKblocks = .nKblocks,
+    B = B,
+    type = type,
+    ref_gmst = ref_gmst,
+    Tyrl = Tyrl,
+    start_vals = estim_Kblock$mle,
+    scale.link = make.link("identity"),
+    reltol = 1e-09, estimate_RL = estimate_RL, varmeth = varmeth)
 
 
     # estimate Variance of Kblock estimator
     slorig_Kblock <- purrr::map_dfr(full_slbm_Kblock$full_data, ~ .x)
 
+    if(type == "shift") {
 
-    estvar_Kblock <- slbm::est_var_univ(orig_slbm = slorig_Kblock$slbm,
+      estvar_Kblock <- slbm::est_var_univ_shift(orig_slbm = slorig_Kblock$slbm,
+                                                est_par = estim_Kblock, blcksz = blcksz,
+                                                temp.cov = slorig_Kblock$temp_cvrt,
+                                                temp.cov.dj =  slorig_Kblock$temp_cvrt,
+                                                  varmeth = varmeth)
+
+    } else {
+       estvar_Kblock <- slbm::est_var_univ(orig_slbm = slorig_Kblock$slbm,
                                         est_par = estim_Kblock, blcksz = blcksz,
                                         temp.cov = slorig_Kblock$temp_cvrt,
                                         type = type,  varmeth = varmeth)
-
-    # RL estimated on kblock sample
-    rlhat_Kblock <- slbm::compute_rl(theta = estim_Kblock$mle,
-                               Tyrl = Tyrl, type = type, ref_gmst = ref_gmst)
-    bootres <- dplyr::rename(bootres, "rlboot" = "rl")
-    bootres <- bootres %>% dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year"))
-
-    if(varmeth  ==  "V2") {
-      # compute variance of RL estimation on Kblock sample
-      varrl_V2 <- purrr::map_dfr(Tyrl, ~ {
-        dplyr::tibble(var_hat =
-                        slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
-                                              ref_gmst = ref_gmst, Covmat = estvar_Kblock$V2),
-                      refGMST = ref_gmst, Year = .x) })
-
-      # compute quantiles of the bootstrapped studentized RLs
-      tstar_quants_V2 <- bootres %>%
-        dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
-        dplyr::group_by(refGMST, Year) %>%
-        dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
-                         q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
-                         .groups = "drop")
-
-      # join results and compute confidence bounds
-      res <- varrl_V2 %>%
-        dplyr::left_join(tstar_quants_V2, by = c("refGMST", "Year")) %>%
-        dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
-        dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
-
-    }
-
-    if(varmeth  ==  "V") {
-      # compute variance of RL estimation on Kblock sample
-      varrl_V <- purrr::map_dfr(Tyrl, ~ {
-        dplyr::tibble(var_hat =
-                        slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
-                                              ref_gmst = ref_gmst, Covmat = estvar_Kblock$V),
-                      refGMST = ref_gmst, Year = .x) })
-
-      # compute quantiles of the bootstrapped studentized RLs
-      tstar_quants_V <- bootres %>%
-        dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
-        dplyr::group_by(refGMST, Year) %>%
-        dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
-                         q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
-                         .groups = "drop")
-
-      # join results and compute confidence bounds
-      res <- varrl_V %>%
-        dplyr::left_join(tstar_quants_V, by = c("refGMST", "Year")) %>%
-        dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
-        dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
-
     }
 
     # put parameters into df
-    estim_Kblock$mle <- data.frame(t(estim_Kblock$mle))
+    df_estim_Kblock <- data.frame(t(estim_Kblock$mle))
 
-    parest <- parest %>%
-      dplyr::bind_rows(res %>% dplyr::mutate(estim_Kblock$mle, Kblock = k) )
+    if(estimate_RL %in% c(TRUE, "both")) {
+
+      # RL estimated on kblock sample
+       rlhat_Kblock <- slbm::compute_rl(theta = estim_Kblock$mle,
+                               Tyrl = Tyrl, type = type, ref_gmst = ref_gmst)
+
+      if(varmeth == "both") {
+        bootres <- purrr::map(bootres, ~ dplyr::rename(.x, "rlboot" = "rl"))
+        bootres <- purrr::map(bootres, ~ .x %>% dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")))
+      }
+      else {
+        bootres <- dplyr::rename(bootres, "rlboot" = "rl")
+        bootres <- bootres %>% dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year"))
+      }
 
 
+      if(varmeth == "V2") {
+        # compute variance of RL estimation on Kblock sample
+        varrl_V2 <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                          slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
+                                                ref_gmst = ref_gmst, Covmat = estvar_Kblock$V2),
+                        refGMST = ref_gmst, Year = .x) })
+
+        # compute quantiles of the bootstrapped studentized RLs
+        tstar_quants_V2 <- bootres %>%
+          dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
+          dplyr::group_by(refGMST, Year) %>%
+          dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
+                           q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
+                           .groups = "drop")
+
+        # join results and compute confidence bounds
+        res <- varrl_V2 %>%
+          dplyr::left_join(tstar_quants_V2, by = c("refGMST", "Year")) %>%
+          dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
+          dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
+
+      }
+
+      if(varmeth  ==  "V") {
+        # compute variance of RL estimation on Kblock sample
+        varrl_V <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                          slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
+                                                ref_gmst = ref_gmst, Covmat = estvar_Kblock$V),
+                        refGMST = ref_gmst, Year = .x) })
+
+        # compute quantiles of the bootstrapped studentized RLs
+        tstar_quants_V <- bootres %>%
+          dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
+          dplyr::group_by(refGMST, Year) %>%
+          dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
+                           q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
+                           .groups = "drop")
+
+        # join results and compute confidence bounds
+        res <- varrl_V %>%
+          dplyr::left_join(tstar_quants_V, by = c("refGMST", "Year")) %>%
+          dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
+          dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
+
+      }
+
+      if(varmeth == "both") {
+        # compute variance of RL estimation on Kblock sample
+        varrl_V2 <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                          slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
+                                                ref_gmst = ref_gmst, Covmat = estvar_Kblock$V2),
+                        refGMST = ref_gmst, Year = .x) })
+
+        # compute quantiles of the bootstrapped studentized RLs
+        tstar_quants_V2 <- bootres$resV2 %>%
+          dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
+          dplyr::group_by(refGMST, Year) %>%
+          dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
+                           q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
+                           .groups = "drop")
+
+        # join results and compute confidence bounds
+        resV2 <- varrl_V2 %>%
+          dplyr::left_join(tstar_quants_V2, by = c("refGMST", "Year")) %>%
+          dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
+          dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
+
+
+        # compute variance of RL estimation on Kblock sample
+        varrl_V <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                          slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
+                                                ref_gmst = ref_gmst, Covmat = estvar_Kblock$V),
+                        refGMST = ref_gmst, Year = .x) })
+
+        # compute quantiles of the bootstrapped studentized RLs
+        tstar_quants_V <- bootres$resV %>%
+          dplyr::mutate(tstar = (rlboot - rl)/sqrt(var_hat)) %>%
+          dplyr::group_by(refGMST, Year) %>%
+          dplyr::summarise(q0975 = quantile(tstar, p = c(0.975), na.rm = TRUE),
+                           q0025 = quantile(tstar, p = 0.025, na.rm = TRUE),
+                           .groups = "drop")
+
+        # join results and compute confidence bounds
+        resV <- varrl_V %>%
+          dplyr::left_join(tstar_quants_V, by = c("refGMST", "Year")) %>%
+          dplyr::left_join(rlhat_Kblock, by = c("refGMST", "Year")) %>%
+          dplyr::mutate(lower = rl - sqrt(var_hat)*q0975, upper = rl - sqrt(var_hat)*q0025)
+
+        res <- resV %>% dplyr::mutate(varmeth = "V") %>%
+          dplyr::bind_rows(resV2 %>% dplyr::mutate(varmeth = "V2"))
+
+      }
+
+
+      parest <- parest %>%
+        dplyr::bind_rows(res %>% dplyr::mutate(df_estim_Kblock, Kblock = k) )
+
+
+    }
+
+    if(estimate_RL %in% c(FALSE, "both")) {
+
+      if(varmeth == "V2") {
+        # compute variance of RL estimation on Kblock sample
+        par_vars <- diag(estvar_Kblock$V2)
+        parsK <- estim_Kblock$mle
+
+        bootpars <-  bootres %>%  dplyr::select(mu, sigma, shape, alpha, CovestV) %>% unique()
+
+        tstar_pars_V2 <- bootpars %>% dplyr::mutate( star =
+          purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
+                              function(mu, sigma, shape, alpha, CovestV) {
+                                dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
+                                 (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
+                               (shape - parsK["shape"])/sqrt(CovestV[3,3]),
+                                (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
+                              })
+        )
+
+        # compute quantiles of the bootstrapped studentized parameter estimates
+        tstar_pars_quants_V2 <- tstar_pars_V2 %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+          dplyr::summarise_at(1:4,  ~ quantile(.x, p = c(0.975, 0.025), na.rm = TRUE)) %>%
+          dplyr::mutate(quant = c("q0975", "q0025"))
+
+        lower_bounds <- (parsK - sqrt(par_vars) * tstar_pars_quants_V2[1 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                               names_to = "parameter", values_to = "lower")
+
+        upper_bounds <- (parsK - sqrt(par_vars) * tstar_pars_quants_V2[2 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "upper")
+
+        parsK <- tidyr::pivot_longer(parsK, cols = 1:4, names_to = "parameter", values_to = "par_est")
+
+        res_pars <- parsK %>% dplyr::left_join(lower_bounds, by = "parameter") %>%
+          dplyr::left_join(upper_bounds, by = "parameter")
+
+
+      }
+
+      if(varmeth  ==  "V") {
+        # compute variance of RL estimation on Kblock sample
+        par_vars <- diag(estvar_Kblock$V)
+        parsK <- df_estim_Kblock
+
+        bootpars <-  bootres %>%  dplyr::select(mu, sigma, shape, alpha, CovestV) %>% unique()
+
+        tstar_pars_V  <- bootpars %>% dplyr::mutate( star =
+                                                       purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
+                                                                   function(mu, sigma, shape, alpha, CovestV) {
+                                                                     dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
+                                                                                   (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
+                                                                                   (shape - parsK["shape"])/sqrt(CovestV[3,3]),
+                                                                                   (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
+                                                                   })
+        )
+
+        # compute quantiles of the bootstrapped studentized parameter estimates
+        tstar_pars_quants_V <- tstar_pars_V %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+          dplyr::summarise_at(1:4,  ~ quantile(.x, p = c(0.975, 0.025), na.rm = TRUE)) %>%
+          dplyr::mutate(quant = c("q0975", "q0025"))
+
+        lower_bounds <- (parsK - sqrt(par_vars) * tstar_pars_quants_V[1 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "lower")
+
+        upper_bounds <- (parsK - sqrt(par_vars) * tstar_pars_quants_V[2 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "upper")
+
+        parsK <- tidyr::pivot_longer(parsK, cols = 1:4, names_to = "parameter", values_to = "par_est")
+
+        res_pars <- parsK %>% dplyr::left_join(lower_bounds, by = "parameter") %>%
+          dplyr::left_join(upper_bounds, by = "parameter")
+
+      }
+
+      if(varmeth == "both" & estimate_RL == "both") {
+
+        ### for V2 Method:
+
+        # compute variance of RL estimation on Kblock sample
+        par_vars_V2 <- diag(estvar_Kblock$V2)
+        parsK <- estim_Kblock$mle
+
+        bootpars <-  bootres$resV2 %>%  dplyr::select(mu, sigma, shape, alpha, CovestV) %>% unique()
+
+        tstar_pars_V2 <- bootpars %>% dplyr::mutate( star =
+                                                       purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
+                                                                   function(mu, sigma, shape, alpha, CovestV) {
+                                                                     dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
+                                                                                   (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
+                                                                                   (shape - parsK["shape"])/sqrt(CovestV[3,3]),
+                                                                                   (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
+                                                                   })
+        )
+
+        # compute quantiles of the bootstrapped studentized parameter estimates
+        tstar_pars_quants_V2 <- tstar_pars_V2 %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+          dplyr::summarise_at(1:4,  ~ quantile(.x, p = c(0.975, 0.025), na.rm = TRUE)) %>%
+          dplyr::mutate(quant = c("q0975", "q0025"))
+
+        lower_bounds <- (parsK - sqrt(par_vars_V2) * tstar_pars_quants_V2[1 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "lower")
+
+        upper_bounds <- (parsK - sqrt(par_vars_V2) * tstar_pars_quants_V2[2 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "upper")
+
+        parsK <- tidyr::pivot_longer(parsK, cols = 1:4, names_to = "parameter", values_to = "par_est")
+
+        res_pars_V2 <- parsK %>% dplyr::left_join(lower_bounds, by = "parameter") %>%
+          dplyr::left_join(upper_bounds, by = "parameter")
+
+        ## for V Method:
+
+        par_vars_V <- diag(estvar_Kblock$V)
+        parsK <- estim_Kblock$mle
+
+        bootpars <-  bootres$resV %>%  dplyr::select(mu, sigma, shape, alpha, CovestV) %>% unique()
+
+        tstar_pars_V <- bootpars %>% dplyr::mutate( star =
+                                                       purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
+                                                                   function(mu, sigma, shape, alpha, CovestV) {
+                                                                     dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
+                                                                                   (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
+                                                                                   (shape - parsK["shape"])/sqrt(CovestV[3,3]),
+                                                                                   (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
+                                                                   })
+        )
+
+        # compute quantiles of the bootstrapped studentized parameter estimates
+        tstar_pars_quants_V <- tstar_pars_V %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+          dplyr::summarise_at(1:4,  ~ quantile(.x, p = c(0.975, 0.025), na.rm = TRUE)) %>%
+          dplyr::mutate(quant = c("q0975", "q0025"))
+
+        lower_bounds <- (parsK - sqrt(par_vars_V) * tstar_pars_quants_V[1 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "lower")
+
+        upper_bounds <- (parsK - sqrt(par_vars_V) * tstar_pars_quants_V[2 ,1:4]) %>%
+          tidyr::pivot_longer(cols = 1:4,
+                              names_to = "parameter", values_to = "upper")
+        parsK <- tidyr::pivot_longer(parsK, cols = 1:4, names_to = "parameter", values_to = "par_est")
+
+
+        res_pars_V <- parsK %>% dplyr::left_join(lower_bounds, by = "parameter") %>%
+          dplyr::left_join(upper_bounds, by = "parameter")
+
+
+
+        res_pars <- res_pars_V %>% dplyr::mutate(varmeth = "V") %>%
+          dplyr::bind_rows(res_pars_V2 %>% dplyr::mutate(varmeth = "V2"))
+
+      }
+
+
+      paramest <- paramest %>%
+        dplyr::bind_rows(res_pars %>% dplyr::mutate( Kblock = k) )
+    }
+
+   }
+
+
+  if(estimate_RL %in% c(TRUE, "both")) {
+    rl_hat_full <- slbm::compute_rl(theta = est_sl$mle, Tyrl = Tyrl, type = type, ref_gmst = ref_gmst)
+
+    rl_hat_full <- dplyr::rename(rl_hat_full, "rlfull" = "rl")
+
+    parest <- parest %>% dplyr::left_join(rl_hat_full, by = c("refGMST", "Year"))
   }
 
+  if(isTRUE(estimate_RL)) { return( parest) }
+  if(estimate_RL == FALSE){ return( paramest) }
+  if(estimate_RL == "both"){ return( list(res_params  = paramest,
+                                          res_rl  = parest)) }
 
-
-
-
-  parest %>% dplyr::left_join(rl_hat_full, by = c("refGMST", "Year"))
 
 
 }

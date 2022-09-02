@@ -1,14 +1,3 @@
-# origslbm <- apply(ExampleData, 2, blockmax, r = 90, "sliding")
-# origslbm <- reshape2::melt(origslbm)
-# origslbm <- rename(origslbm, "Obs" = "value", "Station" = "Var2") %>% select(-Var1)
-# params <-  fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
-#                         scale.sp.form = ~ lon +lat,
-#                         loc.temp.form = ~ GMST, spat.cov = spatial_cvrt,
-#                         datastart = djbm, st_val_meth = "LeastSqTemp",
-#                         temp.cov = tempcv$smoothedGMST, return_hess = TRUE)$mle
-#
-# scorefun_spat(params= params, loc.sp.form = ~ lon + lat,scale.sp.form = ~ lon +lat,
-#               spat.cov = spatial_cvrt, origslbm = origslbm)
 
 scorefun_spat <- function(params, loc.sp.form, scale.sp.form,
                                   loc.temp.form = NULL, scale.temp.form = NULL,
@@ -77,13 +66,14 @@ scorefun_spat <- function(params, loc.sp.form, scale.sp.form,
   n.scale.sp <- ncol(model.scale.sp)
 
   xx <- origslbm
-  xx <- xx %>% group_by(Station) %>% nest(data = Obs) %>% mutate(data = purrr::map(data, ~ .x$Obs)) %>%
-    ungroup()
+  xx <- xx %>% dplyr::group_by(Station) %>% tidyr::nest(data = Obs) %>%
+    dplyr::mutate(data = purrr::map(data, ~ .x$Obs)) %>%
+    dplyr::ungroup()
 
-  xx <- xx %>% bind_cols(loc_sp, scale_sp)
+  xx <- xx %>% dplyr::bind_cols(loc_sp, scale_sp)
 
   # mutate value of (1+gamma*(x - mud)/sigmad)^(-1/gamma)
-  xx <- xx %>% mutate(zd = purrr::pmap(list(data, loc_sp, scale_sp),
+  xx <- xx %>% dplyr::mutate(zd = purrr::pmap(list(data, loc_sp, scale_sp),
                                        function(data, loc_sp, scale_sp) {
                                            zz <- (data - loc_sp)/scale_sp
                                            zz[ (1+params.sp$shape*zz) <=  0] <- NA
@@ -171,6 +161,7 @@ compute_sl_cov <- function(Y, column1, column2, varmeth, blcksz) {
   k <-  nsl /blcksz
   k <- ifelse(k == floor(k), k, floor(k))
 
+
   useobs <- k*blcksz
 
   Y1 <- Y[column1, 1:useobs ]
@@ -179,7 +170,7 @@ compute_sl_cov <- function(Y, column1, column2, varmeth, blcksz) {
   m1 <- t(matrix(Y1, nrow = blcksz, ncol = k))
   m2 <- t(matrix(Y2, nrow = blcksz, ncol = k))
 
-  cm1m2 <- cov(m1, m2)
+  cm1m2 <- cov(m1, m2, use = "pairwise.complete.obs")
   if(varmeth == "V2") {
     return( 2* mean(as.numeric(lapply(AllDiags(cm1m2), mean, na.rm = TRUE)) )/ k)
   }
@@ -213,17 +204,3 @@ compute_sl_cov_spat <- function(origslbm, params, hessmat, blcksz, varmeth,
    covsl
  }
 
-
-# compute_sl_cov_spat(aa, hessmat = hessmat$hessian,
-#                     blcksz = 90, varmeth = "V2")
-
-#
-# hessmat <-  fit_spgev_sl(data = bmuniq, loc.sp.form = ~ lon + lat,
-#                          scale.sp.form = ~ lon +lat,
-#                          loc.temp.form = NULL, spat.cov = spatial_cvrt,
-#                          datastart = djbm, st_val_meth = "LeastSq",
-#                          temp.cov = tempcv$smoothedGMST, return_hess = TRUE)
-#
-#
-# compute_sl_cov_spat(aa, hessmat = hessmat$hessian, k = 40, blcksz = 90, varmeth = "V2")
-#
