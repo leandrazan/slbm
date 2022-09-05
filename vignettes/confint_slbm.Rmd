@@ -1,0 +1,148 @@
+---
+title: "Estimating parameters of (non-)stationary GEV models and their estimation uncertainty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{confint_slbm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, warning=FALSE, message=FALSE}
+library(slbm)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+This vignette describes the (non-)stationary univariate that can be fitted based on 
+sliding block maxima with the `slbm` package. 
+
+
+## Preliminaries and Model assumptions
+
+The univariate models treated here assume that every block maximum
+\[ M_{r,i}^{(t)} = \max\{ X_i^{(t)}, \ldots, X_r^{(t)}, X_1^{(t+1)}, \ldots, X_{i-1}^{(t+1)} \}, \
+i = 1, \ldots, r, \ t = 1, \ldots, m,\]
+that is computed over a block containing $r$ of the observations $(X_j^{(t)})_{j,t}$ and that starts in year $t$ satisfies 
+
+\[   M_{r,i}^{(t)} \sim \mathrm{GEV}(\mu(t), \sigma(t), \gamma), \]
+
+where $\mathrm{GEV}(\mu(t), \sigma(t), \gamma)$ has distribution function 
+
+\[ F_{(\mu(t), \sigma(t), \gamma)}(x) = \exp\left( - \left(  1 + \gamma \frac{ x - \mu(t)}{\sigma(t)} \right)_+^{-\frac1\gamma} \right). \]
+The models for the location and scale parameter are
+
+* stationary model: 
+
+\[ \mu(t) \equiv \mu, \ \sigma(t) \equiv \sigma.   \]
+
+* shift model:
+
+\[ \mu(t) =  \mu + \alpha \mathrm{GMST}(t), \ \sigma(t) \equiv \sigma.   \]
+
+* scale model:
+
+\[ \mu(t) =  \mu \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right), \
+   \sigma(t) = \sigma \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right).   \]
+   
+
+The usual definition of a return level is not compatible with the non-stationary
+models. One has to choose a *reference climate* for which one wants to estimate the 
+Return Level. For example, an estimate for the 100-year RL in the climate of 1970 is given through
+\[ F^{-1}_{(\hat\mu(1970), \hat\sigma(1970), \gamma)}(1-1/100), \]
+where $\hat\mu(1970)$ and $\hat\sigma(1970)$ are estimates for the location and scale parameter
+of the chosen distribution in year 1970. 
+
+The function `fit_gev_univ` can fit these models based on sliding block maxima.
+To obtain confidence intervals for the estimated parameters or for estimated return levels, 
+one can employ the function `ci_student_boot_sl`. 
+As the name suggests, it performs a studentised bootstrap procedure based on sliding block maxima. To obtain a bootstrap sample, a block bootstrap is performed. For the block-bootstrap-parameter $K$ (which has to be chosen by you), this works as follows:
+
+1. The daily 
+    observations are grouped into disjoint blocks consisting of the observations from $K$            seasons, yielding $\lceil m/K \rceil$ larger blocks. 
+2. Within these larger disjoint blocks, sliding block maxima are computed. 
+3. Based on this *full* sample, the parameters (or return levels), and their estimation variances, are estimated.
+4. The indices of the larger blocks that will make up the bootstrap sample are chosen by sampling randomly with replacement from the indices $1, \ldots, \lceil m/K \rceil$. 
+5. The bootstrap sample is assembled by concatening all block maxima from the larger blocks that were chosen in step 4. 
+6. The model is fitted on the bootstrap sample (and, if required, return levels are estimated).
+Further, estimates of the variances are computed.
+7. For each parameter (or return level) that is to be estimated, $\alpha/2$ and $1-\alpha/2$ quantiles of the studentised bootstrap estimates are computed, where $\alpha$ denotes the confidence level.
+8. For each parameter (or return level) that is to be estimated, the quantiles from step 7 
+are multiplied by the standard deviations obtained in step 3, and then substracted from the 
+estimates of step 3, resulting in the confidence intervals
+\[( \hat\vartheta - \widehat{\mathrm{se}}(\hat\vartheta) t^*_{1-\alpha/2}, \hat\vartheta - \widehat{\mathrm{se}}(\hat\vartheta) t^*_{\alpha/2}), \]
+where here $\vartheta$ denotes one of the parameters or RLs that are to be estimated. 
+
+
+
+## Application on real data
+
+In attribution studies, the shift model is often used for seasonal maxima of 
+daily maximum temperatures, while the scale model is usually applied when analysing 
+seasonal maxima of daily cumulated precipitation amounts. 
+
+Therefore we will fit the two non-stationary models to some example data sets of the mentioned
+types in the following. 
+
+### The shift model
+
+We start with the shift model. The `DailyTempNRW` data is a list with list components `TimeSeries` which contains measurements of daily maximum temperatures, and `SpatialCov` which contains
+station metadata. The latter will not be needed during this analysis, because we want to 
+fit a univariate model. Therefore we restrict the analysis to the data from the Station `Aachen` and suppose we want to fit a model for summer's daily maximum temperatures.
+
+The `GMST` data contains values of the global mean surface temperature as well as a smoothed version of it. 
+
+We start by loading the data and extracting the relevant observations that were made at Aachen.
+
+```{r}
+data("GMST")
+data("DailyTempNRW")
+
+# extract observations from Aachen along with the Date of observation. 
+dailyAach <- DailyTempNRW$TimeSeries %>% select(Datetime, Aachen)  
+# plot the data
+ggplot(dailyAach, aes( x = Datetime, y = Aachen)) + geom_line()
+#  in the plot we see that from 2011 onwards there is no data, 
+# so we choose only years up to 2010:
+dailyAach <-  dailyAach %>% filter(lubridate::year(Datetime) <= 2010)
+anyNA(dailyAach) # no NA's left
+```
+Also, we need to extract the matching covariate values from the `GMST` data. 
+
+```{r}
+# first and last year with observations:
+fl_year <- c(min(lubridate::year(dailyAach$Datetime)), max(lubridate::year(dailyAach$Datetime)))
+gmst <- GMST %>% filter(Year >= fl_year[1], Year <= fl_year[2])
+```
+
+This gives us `r fl_year[2] - fl_year[1] +1` seasons of observations, and the seasonlength, i.e. the blocksize is `30 + 31+ 31 = 92`.
+We want to compute parameter estimates for the shift model along with their 95\% confidence intervals. Further, we want to compute estimates of the 100-year Return Level for the reference climates of years 1970 and 2010, again with confidence intervals. 
+
+The function `ci_student_boot_sl` does all that for us. A look into the function documentation tells us that it takes the following input: the daily observations as a numeric vector, the blocksize, the 
+bootstrap parameter $K$, the number of bootstrap repetitions, the temporal covariate (one value for each day with an observation), the model type (i.e. one of `shift`, `scale` or `stationary`), the return periods for which we want to compute the Return Levels, 
+the global mean surface temperatures as observed in the reference years and some other fine tuning parameters. 
+
+As mentioned above, in our example the blocksize is 92, and the reference climates for which 
+we want to compute the  are 1970 and 2010. Further, we choose the block-bootstrap 
+parameter as $K = 4$.
+```{r}
+blcksz <- 92
+refgmst <- gmst %>% filter(Year %in% c(1970, 2010))
+res_shift <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
+                   temp.cov = rep(gmst$smoothedGMST, each = blcksz),
+                   B = 200, type = "shift", Tyrl = 100, Kblock = 4,
+                   ref_gmst = refgmst$smoothedGMST, estimate_RL = "both"
+                   )
+res_shift$res_par  # results for parameter estimation
+res_shift$res_rl  # results for RL estimation
+```
+### The scale model 
+
+
