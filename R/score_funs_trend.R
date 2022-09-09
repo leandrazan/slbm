@@ -419,7 +419,7 @@ compute_cov_nonstat <- function(covstat, type, temp_cvrt, Jinv, ...) {
                     )
 
       sig44 <- meanexp_ac_csq_sq*(mu0*(mu0*covstat[1,1] + sigma0*covstat[1,2]) +
-                                  sigma0*(mu0*covstat[1,1] + sigma0*covstat[2,2]))
+                                  sigma0*(mu0*covstat[1,2] + sigma0*covstat[2,2]))
 
       covstat2 <- rbind(covstat2, alpha_ab)
       covstat2 <- cbind(covstat2, c(alpha_ab,sig44))
