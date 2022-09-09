@@ -175,7 +175,7 @@ fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
   mlest <- optim(start_vals, fn = nll_univ,
                  data = data,
                  method = method, control = list(maxit = maxiter),
-                 hessian = hessian, type = type, ... = ...)
+                 hessian = hessian, type = type, rel_trend = add.args$rel_trend)
   if(!(mlest$convergence == 0) ){print("Optimization didn't succeed.")}
 
   if(!hessian) {
