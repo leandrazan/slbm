@@ -16,7 +16,8 @@ ci_student_boot_sl(
   ref_gmst = c(0.8, 0.9),
   varmeth = "V2",
   looplastblock = TRUE,
-  reltol = 1e-09
+  reltol = 1e-09,
+  estimate_RL = TRUE
 )
 }
 \arguments{
@@ -45,8 +46,13 @@ RLs are estimated. Ignored when type is 'stationary'.}
 \item{looplastblock}{logical; wether last block is looped}
 
 \item{reltol}{Passed to optim}
+
+\item{estimate_RL}{One of \code{TRUE, FALSE} or \code{"both"}. If \code{FALSE},
+only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
+If \code{"both"}, both parameter and RL estimates are computed.}
 }
 \value{
+When \code{estimate_RL = TRUE}:
 A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
 \code{Kblocks} the following values:
 \describe{
@@ -61,6 +67,10 @@ Only differs from the RL that was estimated on the full sliding BM sample when
 \code{loc, scale, shape} for 'stationary', giving the estimated GEV parameters as estimated
 on the Kblock-sample.}
 }
+
+When \code{estimate_RL = "both"}: A list containing the above tibble as list element
+named \code{res_rl} as well as a tibble with confidence interval bounds for each of the
+parameter vectors.
 }
 \description{
 Estimate RLs and respective confidence intervals of GEV fits based on

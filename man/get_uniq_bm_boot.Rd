@@ -33,7 +33,7 @@ be returned. Needed for parametric covariance estimation.}
 }
 \value{
 Returns a tibble with columns \code{Station}, \code{Kblockind},\code{uniq_data} and, if \code{returnfullsamp  = TRUE},
-\code{ful_data}. These are the station reference, the block index of the blocks of size \code{K} times \code{blcksz},
+\code{full_data}. These are the station reference, the block index of the blocks of size \code{K} times \code{blcksz},
 the sample of unique sliding block maxima values and their frequency and the looped sliding block maxima.
 }
 \description{

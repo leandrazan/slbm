@@ -1,13 +1,13 @@
 
 # params is a vector of length 4
 nll_univ <- function(params,
-                      data, type){
+                     data, type, rel_trend = TRUE){
 
   if(!(type %in% c("scale", "shift", "stationary"))) { stop("Type must be one of 'shift',
                                                             'scale' or 'stationary'.")}
   n.dat <- nrow(data)
 
-  if(type == "scale") {
+  if(type == "scale" & !rel_trend) {
 
     mu0 <- c("mu" = params[1])
     sigma0 <- c("sigma" = params[2])
@@ -18,6 +18,34 @@ nll_univ <- function(params,
     else {
       mut <- mu0*exp(alpha0*data$temp_cvrt/mu0)
       sigmat <-  sigma0*exp(alpha0*data$temp_cvrt/mu0)
+
+
+      if(abs(gamma0) < 1e-8){
+        zt <- exp( -(data$slbm - mut)/sigmat)
+
+        loglik <-  sum( data$n * (log(sigmat) + log(zt) + zt) , na.rm = TRUE)
+      }
+      else{
+        zt <- 1 + gamma0*(data$slbm - mut)/sigmat
+        if(any(zt < 0, na.rm = TRUE)){ loglik <- 1e+10}
+        else{
+          loglik <- sum(data$n*( log(sigmat) + (1/gamma0 +1)*log(zt) + zt^(-1/gamma0)),
+                        na.rm = TRUE)
+        }
+      }
+    }
+  }
+  if(type == "scale" & rel_trend) {
+
+    mu0 <- c("mu" = params[1])
+    sigma0 <- c("sigma" = params[2])
+    gamma0 <- c("shape" = params[3])
+    alpha0 <- c("alpha" = params[4])
+
+    if(sigma0 <= 0) {return(1e+10)}
+    else {
+      mut <- mu0*exp(alpha0*data$temp_cvrt)
+      sigmat <-  sigma0*exp(alpha0*data$temp_cvrt)
 
 
       if(abs(gamma0) < 1e-8){
@@ -88,8 +116,6 @@ nll_univ <- function(params,
   loglik
 }
 
-
-
 #' GEV fit with trend
 #' @description Fit a model that either shifts or scales with a temporal covariate
 #' to univariate data
@@ -131,7 +157,10 @@ nll_univ <- function(params,
 #' fit_gev_univ(data = bms, hessian = TRUE, type = "stationary")
 
 fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
-                         hessian = FALSE, type) {
+                         hessian = FALSE, type, ...) {
+
+  add.args <- list(...)
+  if(type == "scale" & is.null(add.args$rel_trend)) {stop("Please specify parametrization of scale model.")}
 
   start_st <-  evd::fgev(as.vector(data$slbm), std.err = FALSE)$estimate
   if(type == "stationary") {
@@ -140,14 +169,13 @@ fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
   }
   else {
     start_vals <- c(start_st[1], start_st[2], start_st[3], 0)
-    if(type == "scale") {names(start_vals) <- c("mu", "sigma", "shape", "alpha")}
-    else { names(start_vals) <- c("mu", "sigma", "shape", "alpha")}
+    names(start_vals) <- c("mu", "sigma", "shape", "alpha")
   }
   #print(start_vals)
   mlest <- optim(start_vals, fn = nll_univ,
                  data = data,
                  method = method, control = list(maxit = maxiter),
-                 hessian = hessian, type = type)
+                 hessian = hessian, type = type, ... = ...)
   if(!(mlest$convergence == 0) ){print("Optimization didn't succeed.")}
 
   if(!hessian) {

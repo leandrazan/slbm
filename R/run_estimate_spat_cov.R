@@ -94,13 +94,13 @@ iteration_shift_cov <- function(blcksz, n.years, temp_cvrt,
   estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
 
   if(method == "neu") {
-    covest <- est_var_univ_shift(slbm, est_par = estim, blcksz = blcksz, temp.cov = temp_cvrt,
-                                 temp.cov.dj = temp_cvrt_dj,
+    covest <- est_var_chain(slbm, est_par = estim, blcksz = blcksz, temp.cov = temp_cvrt,
+                                type = "shift",
       varmeth = varmeth)
   }
   else {
-    covest <- est_var_univ(slbm, est_par = estim, blcksz = blcksz, temp.cov = temp_cvrt,
-                                 type = "shift",
+    covest <- est_var_univ_shift(slbm, est_par = estim, blcksz = blcksz, temp.cov = temp_cvrt,
+                                 temp.cov.dj = temp_cvrt_dj,
                                  varmeth = varmeth)
   }
 
@@ -111,8 +111,8 @@ iteration_shift_cov <- function(blcksz, n.years, temp_cvrt,
 
 # set.seed(1)
 # Res <- purrr::map_dfr(1:500, ~ iteration_shift_cov(90, 100, GMST[43:142, 3],
-#                                                  mu = 30, alpha = 3, sigma = 1.5,
-#                                                  shape = 0.2, method = "alt", varmeth = "V2"))
+#                                                   mu = 30, alpha = 3, sigma = 1.5,
+#                                                   shape = 0.2, method = "alt", varmeth = "V2"))
 #
 #
 # methalt <- Res %>% mutate(
@@ -140,12 +140,12 @@ iteration_shift_cov <- function(blcksz, n.years, temp_cvrt,
 # )%>% summarise_at(6:15, ~ median(.x, na.rm = TRUE))
 #
 # A1 <- cov(Res[, 1:4])
-#  methneu
-#   A1
+# #  methneu
+# #   A1
 # methalt
-#  goals <- A1[upper.tri(A1, diag = TRUE)]
+# goals <- A1[upper.tri(A1, diag = TRUE)]
 #  methneu - goals
-#  methalt - goals
-# abs(methneu - goals) < abs(methalt - goals)
-#  round(methneu - methalt, 10)
+#   methalt - goals
+#  abs(methneu - goals) < abs(methalt - goals)
+#   round(methneu - methalt, 10)
 # A1

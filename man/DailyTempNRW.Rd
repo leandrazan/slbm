@@ -9,7 +9,7 @@ A list with components
 \describe{
 \item{TimeSeries}{ tibble (8,188 x 10): the first column \code{Datetime} contains
 the date of the observation, the columns 2 to 9 the observed daily maximum temperature
-at the respective station (see column names)
+at the respective station (see column names) as made during summer months (June, July, August)
 }
 \item{SpatialCov}{Spatial covariates such as Station ID, Station name, elevation,
 latitude, longitude.}

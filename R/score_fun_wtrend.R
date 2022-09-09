@@ -209,7 +209,7 @@ AllDiags2 <- function(inmat, sorted = TRUE) {
 #' @param varmeth One of 'V', 'V2' or 'both'. Determines the method used for estimating
 #' the covariance matrix.
 #'
-#' @return
+#' @return A list with components `V` and/or `V2` containing estimated covariance matrices.
 #' @export
 #'
 #' @examples
@@ -226,52 +226,6 @@ AllDiags2 <- function(inmat, sorted = TRUE) {
 #' estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
 #' est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
 #' varmeth = "both", type = "shift")
-
-
-# schneller als est_var_univ. Aktuell nur V variante
-est_var_univ_faster <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
-                         type = "shift",
-                         varmeth = "both"){
-  nsl <- length(orig_slbm)
-  k <-  nsl /blcksz
-  k <- ifelse(k == floor(k), k, floor(k))
-
-  if(!(type %in% c("scale", "shift", "stationary"))) {
-    stop("Type must be one of 'scale', 'shift', 'stationary'.")
-  }
-  if(is.null(est_par$hessian)) { stop("Hessian of log likelihood is missing.")}
-
-
-  temp_cvrt_sl <- temp.cov[1:length(orig_slbm)]
-
-  score.bdata <- score.function_univ(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
-                                     type = type)
-
-  fishest <- est_par$hessian/nsl
-
-  fishestinv <- solve(fishest)
-
-  useobs <- k*blcksz
-  dimtheta <- ifelse(type == "stationary", 3, 4)
-
-  Y <- t(score.bdata[, 1:useobs])
-
-  A2 <- array(Y, dim = c(blcksz, k, dimtheta))
-
-
-  B2 <- 2*Reduce( "+" , purrr::map(1:blcksz, ~ cov(A2[1, , ], A2[.x, , ])) )/blcksz/k
-
-  B2 <- (B2 + t(B2))/2
-  V <- fishestinv %*% B2 %*% fishestinv
-
-  if(varmeth == "both") {return(list(V = V, V2 = V2))}
-  if(varmeth == "V"){return(list(V = V))}
-  if(varmeth == "V2"){return(list(V2 = V2))}
-
-}
-
-
-
 est_var_univ <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                          type = "shift",
                            varmeth = "both"){
@@ -449,6 +403,27 @@ est_var_univ <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
 
 
+#' GEV parameter covariance matrix for sliding blocks ML estimator in shift model
+#' @inheritParams est_var_univ
+#' @param temp.cov.dj Optional: values of the temporal covariate one would use for
+#' disjoint blocks.
+#' @return A list with components `V` and/or `V2` containing estimated covariance matrices.
+#' @export
+#'
+#' @examples
+#' ### simulate some data with a linear trend
+#' xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
+#' ## temporal covariate for sliding BM
+#' temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
+#'
+#' ## compute sample of uniuqe sliding BM
+#' bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
+#'
+#' ## full sample of sliding for estimaing the covariance matrix
+#' slbm <- blockmax(xx, r = 90, "sliding")
+#' estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
+#' est_var_univ_shift(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
+#' varmeth = "both")
 est_var_univ_shift <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                                temp.cov.dj = NULL,
                                  varmeth = "both"){
@@ -474,9 +449,17 @@ est_var_univ_shift <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
   useobs <- k*blcksz
   dimtheta <- 4
-  meanbt <- mean(temp.cov.dj[1:k])
 
-  meanbtsquare <- mean(temp.cov.dj[1:k]^2)
+  if(!is.null(temp.cov.dj)) {
+    meanbt <- mean(temp.cov.dj[1:k])
+
+    meanbtsquare <- mean(temp.cov.dj[1:k]^2)
+  }
+  else {
+    meanbt <- mean(temp_cvrt_sl)
+
+    meanbtsquare <- mean(temp_cvrt_sl^2)
+  }
 
   if(varmeth %in% c("V", "both")) {
     Y <- t(score.bdata[, 1:useobs])
@@ -556,6 +539,49 @@ est_var_univ_shift <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
   if(varmeth == "V2"){return(list(V2 = V2))}
 
 }
+
+# schneller als est_var_univ. Aktuell nur V variante
+est_var_univ_faster <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
+                                type = "shift",
+                                varmeth = "both"){
+  nsl <- length(orig_slbm)
+  k <-  nsl /blcksz
+  k <- ifelse(k == floor(k), k, floor(k))
+
+  if(!(type %in% c("scale", "shift", "stationary"))) {
+    stop("Type must be one of 'scale', 'shift', 'stationary'.")
+  }
+  if(is.null(est_par$hessian)) { stop("Hessian of log likelihood is missing.")}
+
+
+  temp_cvrt_sl <- temp.cov[1:length(orig_slbm)]
+
+  score.bdata <- score.function_univ(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
+                                     type = type)
+
+  fishest <- est_par$hessian/nsl
+
+  fishestinv <- solve(fishest)
+
+  useobs <- k*blcksz
+  dimtheta <- ifelse(type == "stationary", 3, 4)
+
+  Y <- t(score.bdata[, 1:useobs])
+
+  A2 <- array(Y, dim = c(blcksz, k, dimtheta))
+
+
+  B2 <- 2*Reduce( "+" , purrr::map(1:blcksz, ~ cov(A2[1, , ], A2[.x, , ])) )/blcksz/k
+
+  B2 <- (B2 + t(B2))/2
+  V <- fishestinv %*% B2 %*% fishestinv
+
+  if(varmeth == "both") {return(list(V = V, V2 = V2))}
+  if(varmeth == "V"){return(list(V = V))}
+  if(varmeth == "V2"){return(list(V2 = V2))}
+
+}
+
 
 qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL) {
 

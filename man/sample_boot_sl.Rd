@@ -51,6 +51,15 @@ RLs are estimated. Ignored when type is 'stationary'.}
 \value{
 A list containing
 \itemize{
+\item \code{est_boot} the parameter estimates of the bootstrap sample
+and one or both of the following:
+\item \code{estvarV} the estimated covariance matrix of the parameter estimates (method 1)
+\item \code{estvarV2} the estimated covariance matrix of the parameter estimates (method 1)
+}
+
+when \code{stimate_RL = FALSE}. If \code{estimate_RL = TRUE}, a list with the following
+components is returned:
+\itemize{
 \item \code{rlboot} the estimated RLs
 and one or both of the following:
 \item \code{rlvarV} the estimated variances of the RLs (method 1)

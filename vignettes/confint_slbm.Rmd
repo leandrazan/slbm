@@ -135,6 +135,7 @@ parameter as $K = 4$.
 ```{r}
 blcksz <- 92
 refgmst <- gmst %>% filter(Year %in% c(1970, 2010))
+set.seed(1)
 res_shift <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
                    temp.cov = rep(gmst$smoothedGMST, each = blcksz),
                    B = 200, type = "shift", Tyrl = 100, Kblock = 4,
@@ -143,6 +144,51 @@ res_shift <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
 res_shift$res_par  # results for parameter estimation
 res_shift$res_rl  # results for RL estimation
 ```
+We can see that the confidence interval for the trend parameter $\alpha$ is quite large and contains 0, which would correspond to the stationary model.
+We can compare this model fit to the fit of the stationary model. 
+
+```{r}
+set.seed(1)
+res_stationary <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
+                                 B = 200, type = "stationary", Tyrl = 100, Kblock = 4,
+                                 estimate_RL = "both"
+                   )
+res_stationary$res_par  # results for parameter estimation
+res_stationary$res_rl  # results for RL estimation
+```
+
 ### The scale model 
 
+The dataset `dailyPrec` contains daily cumulated precipitation amounts that were observed in Aachen. 
+As before, we load the dataset, have a look at its observations, prepare it and then fit the scale model to summer maxima.
+
+```{r}
+data("dailyPrec")
+ggplot(dailyPrec, aes( x = Date, y = cumPrec)) + geom_line()
+```
+
+As we can see, there is a gap with missing observation in the early 1900s and in 1945.
+We therefore check which years are available and then extract the corresponding covariate 
+values from `GMST`. Then we save the observations made during summer months (JJA) to 
+a vector named `summerobs`.
+
+```{r}
+summerobs <- (dailyPrec %>% filter(lubridate::month(Date) %in% c(6,7,8)))
+years_avail <- unique(lubridate::year(summerobs$Date))
+gmst <- GMST %>% filter(Year %in% years_avail)
+```
+Now we have everything we need to fit the model and compute CIs. Again, we want 
+to compare the RLs for reference climates of years 1970 and 2010.
+
+```{r}
+blcksz <- 92
+refgmst <- gmst %>% filter(Year %in% c(1970, 2010))
+res_scale <- ci_student_boot_sl(yy = summerobs$cumPrec, blcksz = blcksz,
+                   temp.cov = rep(gmst$smoothedGMST, each = blcksz),
+                   B = 200, type = "scale", Tyrl = 100, Kblock = 4,
+                   ref_gmst = refgmst$smoothedGMST, estimate_RL = "both"
+                   )
+res_scale$res_par  # results for parameter estimation
+res_scale$res_rl  # results for RL estimation
+```
 

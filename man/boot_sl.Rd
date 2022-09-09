@@ -42,15 +42,16 @@ the bootstrap sample.}
 
 \item{reltol}{Passed to optim.}
 
-\item{estimate_RL}{Must be TRUE. Not implemented atm (when interested in GEV
-parameters rather than RLs)}
+\item{estimate_RL}{One of \code{TRUE, FALSE} or \code{"both"}. If \code{FALSE},
+only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
+If \code{"both"}, both parameter and RL estimates are computed.}
 
 \item{Tyrl}{The return periods for which RLs are estimated}
 
 \item{ref_gmst}{Vector of reference values of the temporal covariate for which
 RLs are estimated. Ignored when type is 'stationary'.}
 
-\item{varmeth}{The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.}
+\item{varmeth}{The method used to estimate the covariance matrix of GEV parameters: 'V', 'V2', or 'both'.}
 }
 \value{
 
@@ -61,7 +62,7 @@ Studentized block bootstrap for sliding block maxima
 \examples{
 blcksz <- 90
 ny <- 100
-yy <-  evd::rgpd(ny*blcksz, shape = 0.2)*2*rep(1:ny/ny, each = blcksz)
+yy <-  evd::rgpd(ny*blcksz, shape = -0.2) + 2*rep(1:ny/ny, each = blcksz)
 df.yy <- data.frame(Station = "X1", Obs = yy)
 k <- 3
 ndata <- blcksz * ny
@@ -81,16 +82,4 @@ sluniq_wb <- sluniq_wb \%>\% dplyr::select(-full_data)
 estim_lo <- slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
  type = "shift", hessian = TRUE)
 
-boot_sl(
-sluniq = sluniq_wb,
-slorig = full_slbm,
-blcksz = blcksz,
-nKblocks = .nKblocks,
-B = 10,
-type = "shift",
-ref_gmst = (c(0.8, 0.9)),
-Tyrl = c(50, 100),
-start_vals = estim_lo$mle,
-scale.link = make.link("identity"),
-reltol = 1e-09, estimate_RL = TRUE)
 }
