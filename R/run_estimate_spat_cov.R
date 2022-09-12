@@ -1,11 +1,11 @@
 
-
-data("GMST")
-set.seed(1)
-ny <- 50
-blcksz <- 90
-spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
-  lon = runif(8))
+#
+# data("GMST")
+# set.seed(1)
+# ny <- 50
+# blcksz <- 90
+# spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
+#   lon = runif(8))
 
 
 iteration_spat_cov <- function(blcksz, n.years, spatial_cvrt,
@@ -149,3 +149,5 @@ iteration_shift_cov <- function(blcksz, n.years, temp_cvrt,
 #  abs(methneu - goals) < abs(methalt - goals)
 #   round(methneu - methalt, 10)
 # A1
+
+

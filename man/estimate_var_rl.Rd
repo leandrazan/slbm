@@ -4,7 +4,7 @@
 \alias{estimate_var_rl}
 \title{Estimate Variance of RL estimation}
 \usage{
-estimate_var_rl(theta, Tyrl, type, ref_gmst = NULL, Covmat)
+estimate_var_rl(theta, Tyrl, type, ref_gmst = NULL, Covmat, rel_trend = TRUE)
 }
 \arguments{
 \item{theta}{A named of parameter estimates in the order:
@@ -22,6 +22,9 @@ at which the variance of the corresponding RL is estimated, or \code{NULL} when 
 is assumed.}
 
 \item{Covmat}{The (estimated) covariance matrix of the parameter vector \code{theta}.}
+
+\item{rel_trend}{logical; only relevant when \code{type = "scale"}. Specifies the parametrisation
+in the scale model.}
 }
 \value{
 

@@ -10,7 +10,9 @@ est_var_univ(
   blcksz,
   temp.cov = NULL,
   type = "shift",
-  varmeth = "both"
+  varmeth = "both",
+  chain = TRUE,
+  ...
 )
 }
 \arguments{
@@ -18,17 +20,23 @@ est_var_univ(
 
 \item{est_par}{Output of \code{\link{fit_gev_univ}}.}
 
-\item{blcksz}{The blocksize used.}
+\item{blcksz}{The blocksize parameter.}
 
 \item{temp.cov}{The temporal covariate (must be same length as \code{orig_slbm}).}
 
 \item{type}{Either 'shift', 'scale' or 'stationary', depending if one assumes
-that obervations are
-shifted or scaled w.r.t. the covariate or stationary (for more details, see
+that obervations shift, scale or do not change w.r.t. the covariate or stationary
+(for more details, see
 \code{\link[slbm]{fit_gev_univ}}).}
 
 \item{varmeth}{One of 'V', 'V2' or 'both'. Determines the method used for estimating
 the covariance matrix.}
+
+\item{chain}{logical; whether the estimator for the covariance matrix should be one obtained
+from the chain rule. Only relvant for the non-stationary models.}
+
+\item{...}{A further argument that needs to be passed when \code{type = scale}, specifying the
+parametrisation of the model.}
 }
 \value{
 A list with components \code{V} and/or \code{V2} containing estimated covariance matrices.
@@ -38,16 +46,4 @@ GEV parameter covariance matrix for sliding blocks ML estimator
 }
 \examples{
 ### simulate some data with a linear trend
-xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
-## temporal covariate for sliding BM
-temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
-
-## compute sample of uniuqe sliding BM
-bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
-
-## full sample of sliding for estimaing the covariance matrix
-slbm <- blockmax(xx, r = 90, "sliding")
-estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
-est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
-varmeth = "both", type = "shift")
 }
