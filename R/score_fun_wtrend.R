@@ -716,7 +716,7 @@ est_var_univ <-  function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                           varmeth = "both", chain = TRUE, ...) {
   if(type == "stationary" | !chain) {
     est_var_univ_nochain(orig_slbm = orig_slbm, est_par = est_par,
-                         blcksz = blcksz, temp.cov = temp.cov, type = type, varmeth = varmeth)
+                         blcksz = blcksz, temp.cov = temp.cov, type = type, varmeth = varmeth, ... = ...)
   }
   else {
     est_var_chain(orig_slbm = orig_slbm, est_par = est_par,

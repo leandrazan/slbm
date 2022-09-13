@@ -312,23 +312,24 @@
 # }
 
 
-
-
-# xx <- dailyPrec %>% filter(lubridate::month(Date) %in% 6:8,
+#
+# blcksz <- 183
+# xx <- dailyPrec %>% filter(lubridate::month(Date) %in% 4:9,
 #                            lubridate::year(Date) >= 1950)
 # gmst <- GMST %>% filter(Year >= 1950, Year <= 2010)
-# bms <- get_uniq_bm(xx$cumPrec, 92, temp_cvrt = rep(gmst$smoothedGMST, each = 92) , looplastblock = FALSE)
+# bms <- get_uniq_bm(xx$cumPrec, blcksz, temp_cvrt = rep(gmst$smoothedGMST, each = blcksz) , looplastblock = FALSE)
 #
 # # full sample of sliding for estimaing the covariance matrix
-# slbm <- blockmax(xx$cumPrec, r = 92, "sliding")
+# slbm <- blockmax(xx$cumPrec, r = blcksz, "sliding")
 # estim <- fit_gev_univ(data = bms, type = "scale", hessian = TRUE, rel_trend = FALSE)
 #
 # estim
 #
-# bb <- score.fun(slbm, theta = estim$mle, temp.cov = rep(gmst$smoothedGMST, each = 92)[1:length(slbm)],
-#                 type = "scale", chain = TRUE, rel_trend = FALSE)
+# bb <- score.fun(slbm, theta = estim$mle, temp.cov = rep(gmst$smoothedGMST, each = blcksz)[1:length(slbm)],
+#                 type = "scale", chain = FALSE, rel_trend = FALSE)
+#
 # est_var_chain(orig_slbm = slbm, est_par =  estim, blcksz =  blcksz,
-#               temp.cov = rep(gmst$smoothedGMST, each = 92)[1:length(slbm)],
+#               temp.cov = rep(gmst$smoothedGMST, each = blcksz)[1:length(slbm)],
 #               type = "scale", varmeth = "both", rel_trend = FALSE)
 
 #
