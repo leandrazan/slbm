@@ -462,7 +462,7 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                          type = "shift",
                            varmeth = "both", ...){
 
-
+  add.args <- list(...)
   nsl <- length(orig_slbm)
   k <-  nsl /blcksz
   k <- ifelse(k == floor(k), k, floor(k))
@@ -476,7 +476,7 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
   temp_cvrt_sl <- temp.cov[1:length(orig_slbm)]
 
   score.bdata <- score.fun(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
-                                        type = type, chain = FALSE, ... = ...)
+                                        type = type, chain = FALSE, rel_trend = add.args$rel_trend)
   # score.bdata <- score.function_univ(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
   #                                      type = type)
 
