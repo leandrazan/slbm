@@ -326,7 +326,11 @@
 # estim
 #
 # bb <- score.fun(slbm, theta = estim$mle, temp.cov = rep(gmst$smoothedGMST, each = blcksz)[1:length(slbm)],
-#                 type = "scale", chain = FALSE, rel_trend = FALSE)
+#                 type = "scale", chain = TRUE, rel_trend = FALSE)
+# cvrt_sl <- rep(gmst$smoothedGMST, each = blcksz)[1:length(slbm)]
+# aa <- score.fun( (slbm - estim$mle[1]*exp(estim$mle[4]*cvrt_sl))/(estim$mle[2]*exp(estim$mle[4]*cvrt_sl)) ,
+#                  theta = c("mu" = 0, "sigma" = 1, estim$mle[3], "alpha" = 0 ), temp.cov = cvrt_sl,
+#                 type = "scale", chain = TRUE, rel_trend = FALSE)
 #
 # est_var_chain(orig_slbm = slbm, est_par =  estim, blcksz =  blcksz,
 #               temp.cov = rep(gmst$smoothedGMST, each = blcksz)[1:length(slbm)],

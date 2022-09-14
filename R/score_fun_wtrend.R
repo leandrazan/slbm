@@ -377,28 +377,44 @@ compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
       sigma0 <- param["sigma"]
       mu0 <- param["mu"]
 
-      meanexp_ac <- mean(exp(alpha0*temp_cvrt), na.rm = TRUE)
-      meanexp_ac_c <- mean(temp_cvrt*exp(alpha0*temp_cvrt), na.rm = TRUE)
-      meanexp_ac_sq <- mean(exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-      meanexp_ac_c_sq <- mean(temp_cvrt*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-      meanexp_ac_csq_sq <- mean(temp_cvrt^2*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-
-
       covstat2 <- covstat
-      covstat2[1:2, 1:2] <- meanexp_ac_sq*covstat[1:2, 1:2]
-      covstat2[3, 1:2] <- meanexp_ac*covstat[3, 1:2]
-      covstat2[1:2, 3] <- meanexp_ac*covstat[1:2, 3]
 
-      alpha_ab <- c(meanexp_ac_c_sq*(mu0*covstat[1,1] + sigma0*covstat[1,2]),
-                    meanexp_ac_c_sq*(mu0*covstat[1,2] + sigma0*covstat[2,2]),
-                    meanexp_ac_c*(mu0*covstat[1,3] + sigma0*covstat[2,3])
-      )
+      meanc <- mean(temp_cvrt, na.rm = TRUE)
+      meancsq <- mean(temp_cvrt^2, na.rm = TRUE)
 
-      sig44 <- meanexp_ac_csq_sq*(mu0*(mu0*covstat[1,1] + sigma0*covstat[1,2]) +
-                                    sigma0*(mu0*covstat[1,2] + sigma0*covstat[2,2]))
+      covstat2[1:2, 1:2] <- covstat[1:2, 1:2]/sigma0^2
+      covstat2[3, 1:2] <- covstat2[1:2, 3] <- covstat[3, 1:2]/sigma0
 
-      covstat2 <- rbind(covstat2, alpha_ab)
-      covstat2 <- cbind(covstat2, c(alpha_ab,sig44))
+      sigma14 <- meanc/sigma0*(mu0/sigma0*covstat[1,1] + covstat[1,2])
+      sigma24 <- meanc/sigma0*(mu0/sigma0*covstat[1,2] + covstat[2,2])
+      sigma34 <- meanc*(mu0/sigma0*covstat[1,3] + covstat[2,3])
+      sigma44 <- meancsq*( mu0/sigma0*(mu0/sigma0*covstat[1,1] + covstat[1,2]) + (mu0/sigma0*covstat[1,2] + covstat[2,2]))
+
+      covstat2 <- cbind(covstat2, c(sigma14, sigma24, sigma34))
+      covstat2 <- rbind(covstat2, c(sigma14, sigma24, sigma34, sigma44))
+
+      # meanexp_ac <- mean(exp(alpha0*temp_cvrt), na.rm = TRUE)
+      # meanexp_ac_c <- mean(temp_cvrt*exp(alpha0*temp_cvrt), na.rm = TRUE)
+      # meanexp_ac_sq <- mean(exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
+      # meanexp_ac_c_sq <- mean(temp_cvrt*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
+      # meanexp_ac_csq_sq <- mean(temp_cvrt^2*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
+      #
+      #
+      # covstat2 <- covstat
+      # covstat2[1:2, 1:2] <- meanexp_ac_sq*covstat[1:2, 1:2]
+      # covstat2[3, 1:2] <- meanexp_ac*covstat[3, 1:2]
+      # covstat2[1:2, 3] <- meanexp_ac*covstat[1:2, 3]
+      #
+      # alpha_ab <- c(meanexp_ac_c_sq*(mu0*covstat[1,1] + sigma0*covstat[1,2]),
+      #               meanexp_ac_c_sq*(mu0*covstat[1,2] + sigma0*covstat[2,2]),
+      #               meanexp_ac_c*(mu0*covstat[1,3] + sigma0*covstat[2,3])
+      # )
+      #
+      # sig44 <- meanexp_ac_csq_sq*(mu0*(mu0*covstat[1,1] + sigma0*covstat[1,2]) +
+      #                               sigma0*(mu0*covstat[1,2] + sigma0*covstat[2,2]))
+      #
+      # covstat2 <- rbind(covstat2, alpha_ab)
+      # covstat2 <- cbind(covstat2, c(alpha_ab,sig44))
 
       return( (Jinv %*% covstat2 %*% Jinv) )
     }
@@ -640,7 +656,7 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
 est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                           type = "shift",
-                          varmeth = "both", ...){
+                          varmeth = "both", ...) {
 
   add.args <- list(...)
 
@@ -656,10 +672,22 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
 
   temp_cvrt_sl <- temp.cov[1:length(orig_slbm)]
-
   Y <- score.fun(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
                  chain = TRUE,
                  type = type, rel_trend = add.args$rel_trend)
+
+
+  if(type == "scale") {
+    temp_cvrt_score <- temp.cov[1:ncol(Y)]
+    sigma0 <- est_par$mle[2]
+    alpha0 <- est_par$mle[4]
+    sigmat <- sigma0*exp(alpha0*temp_cvrt_score)
+
+    Y[1, ] <- Y[1,]/sigmat
+    Y[2, ] <- Y[2, ]/sigmat
+
+  }
+
 
   fishest <- est_par$hessian/nsl
 
