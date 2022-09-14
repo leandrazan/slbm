@@ -683,8 +683,8 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
     alpha0 <- est_par$mle[4]
     sigmat <- sigma0*exp(alpha0*temp_cvrt_score)
 
-    Y[1, ] <- Y[1,]/sigmat
-    Y[2, ] <- Y[2, ]/sigmat
+    Y[1, ] <- Y[1,]*sigmat
+    Y[2, ] <- Y[2, ]*sigmat
 
   }
 
