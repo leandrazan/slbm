@@ -186,7 +186,7 @@ nll_univ <- function(params,
 #' ### shift-fit with covariance matrix estimation:
 #' fit_gev_univ(data = bms, hessian = TRUE, type = "shift", return_cov = TRUE,
 #' varmeth = "V2", chain = TRUE, orig_slbm = blockmax(xx, 90, "sliding"),
-#' orig_cvrt = temp_cvrt)
+#' orig_cvrt = temp_cvrt, blcksz = 90)
 
 fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
                          hessian = FALSE, type, return_cov = FALSE, ...) {

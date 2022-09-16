@@ -919,9 +919,9 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
 #' rlhat
 #' estimate_var_rl(estim$mle, Tyrl = 100, type = "stationary", Covmat = covest$V)
 #'
-estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat,
-                            rel_trend = TRUE) {
+estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat, ...) {
 
+  add.args <- list(...)
   if(type == "stationary") {
     ref_gmst <- 1
   }
@@ -929,7 +929,7 @@ estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat,
 
   qdelt <- purrr::map(ref_gmst, ~
                         qdelta_rl(theta = theta, Tyrl = Tyrl, type = type, ref_gmst = .x,
-                                  rel_trend = rel_trend)
+                                  rel_trend = add.args$rel_trend)
   )
 
   res <- purrr::map_dbl( qdelt, ~ .x %*% Covmat %*% .x)
