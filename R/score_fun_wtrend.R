@@ -872,8 +872,8 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
 #' at which the variance of the corresponding RL is estimated, or \code{NULL} when stationarity
 #' is assumed.
 #' @param Covmat The (estimated) covariance matrix of the parameter vector \code{theta}.
-#' @param rel_trend logical; only relevant when `type = "scale"`. Specifies the parametrisation
-#' in the scale model.
+#' @param ... For additional argument `rel_trend` for specifying the parametrisation which
+#'  needs to be passed when `type = "scale"`.
 #'
 #' @return
 #' @export

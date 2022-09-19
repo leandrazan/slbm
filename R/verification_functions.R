@@ -1,7 +1,7 @@
 #' Check function for evaluating an estimated quantile
 #'
 #' @param u Difference of observed maximum in a test set and estimated p*100% quantile
-#' @param probability
+#' @param p Probability with which the difference is weighted
 #'
 #' @return value of check function
 #' @export

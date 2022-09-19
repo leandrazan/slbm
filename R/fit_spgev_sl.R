@@ -32,6 +32,7 @@
 #' @param print_start_vals Logical; whether to print out the initial parameter values.
 #' @param scale.link The link function that is used to model the scale parameter.
 #' Defaults to \eqn{log(\sigma) = \sigma_0 + \sigma_1 + ... }.
+#' @param hessian Logical; Whether to return the hessian of the negative log-Likelihood.
 #' @param ... Further arguments. These can be
 #' \describe{
 #' \item{temp.cov}{A numeric vector or matrix containing temporal covariates for the

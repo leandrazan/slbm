@@ -9,7 +9,7 @@ check_fun(u, p)
 \arguments{
 \item{u}{Difference of observed maximum in a test set and estimated p*100\% quantile}
 
-\item{probability}{}
+\item{p}{Probability with which the difference is weighted}
 }
 \value{
 value of check function

@@ -17,7 +17,9 @@ sample_boot_sl(
   estimate_RL = TRUE,
   Tyrl = c(50, 100),
   ref_gmst = NULL,
-  varmeth = "V2"
+  varmeth = "V2",
+  chain = TRUE,
+  ...
 )
 }
 \arguments{
@@ -33,6 +35,8 @@ K-block, the unqiue sliding block maxima within that block and their frequency, 
 
 \item{start_vals}{Starting values.}
 
+\item{type}{The type of the model to fit: one of \code{stationary}, \code{shift} or \code{scale}}
+
 \item{scale.link}{The link function for the scale parameter.}
 
 \item{seed}{A seed for the sampling of blocks.}
@@ -47,6 +51,12 @@ K-block, the unqiue sliding block maxima within that block and their frequency, 
 RLs are estimated. Ignored when type is 'stationary'.}
 
 \item{varmeth}{The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.}
+
+\item{chain}{logical and only relevant for non-stationary models: Whether the method for
+covariance estimation should be based on chain rule}
+
+\item{...}{Further arguments passed to \code{fit_gev_univ}. When \code{type = scale}, one must
+pass the logical argument \code{rel_trend} which specifies the parametrisation of the scale model.}
 }
 \value{
 A list containing

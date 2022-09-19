@@ -17,7 +17,10 @@ ci_student_boot_sl(
   varmeth = "V2",
   looplastblock = TRUE,
   reltol = 1e-09,
-  estimate_RL = TRUE
+  estimate_RL = TRUE,
+  conf.level = 0.05,
+  chain = TRUE,
+  ...
 )
 }
 \arguments{
@@ -50,6 +53,14 @@ RLs are estimated. Ignored when type is 'stationary'.}
 \item{estimate_RL}{One of \code{TRUE, FALSE} or \code{"both"}. If \code{FALSE},
 only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
 If \code{"both"}, both parameter and RL estimates are computed.}
+
+\item{conf.level}{A probability between 0 and 1; The confidence level for which confidence intervals are estimated.}
+
+\item{chain}{logical and only relevant for non-stationary models: Whether the method for
+covariance estimation should be based on chain rule}
+
+\item{...}{Further arguments passed to \code{fit_gev_univ}. When \code{type = scale}, one must
+pass the logical argument \code{rel_trend} which specifies the parametrisation of the scale model.}
 }
 \value{
 When \code{estimate_RL = TRUE}:
@@ -62,8 +73,7 @@ Only differs from the RL that was estimated on the full sliding BM sample when
 \item{var_hat}{The estimated Variance of the RL estimation.}
 \item{q0975, q0025}{The 97.5\%- and 2.5\%- quantiles of the bootstrapped studentized RLs.}
 \item{lower, upper}{The lower and upper bound of the confidence interval.}
-\item{further parameters}{Denoted by  \code{mu0, sigma0, gamma, alpha} for 'scale',
-\code{loc0, scale0, shape, TempLoc1} for 'shift' and by
+\item{further parameters}{Denoted by  \code{mu, sigma0, gamma, alpha} for 'scale', and 'shift', and by
 \code{loc, scale, shape} for 'stationary', giving the estimated GEV parameters as estimated
 on the Kblock-sample.}
 }
@@ -79,16 +89,17 @@ with respect to a temporal covariate.
 Confidence intervals are obtained via block bootstrap.
 }
 \examples{
+\dontrun{
 blcksz <- 90
 ny <- 50
 ## with a shift in location
 yy <- evd::rgpd(ny*blcksz, shape = 0.2) + 2*rep(1:ny/ny, each = blcksz)
 ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
-B = 100, type = "shift", ref_gmst = c(0.5, 0.95))
+B = 100, type = "shift", ref_gmst = c(0.5, 0.95), Kblock = 4)
 
 ## observations are scaling w.r.t. GMST
-yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(2/7.3*rep(1:ny/ny, each = blcksz))
-ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
-B = 100, type = "scale", ref_gmst = c(0.5, 0.95))
-
+yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
+ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
+B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both")
+}
 }

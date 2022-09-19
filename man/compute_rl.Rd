@@ -4,7 +4,7 @@
 \alias{compute_rl}
 \title{Compute RL of fitted GEV distribution}
 \usage{
-compute_rl(theta, Tyrl, type, ref_gmst = NULL)
+compute_rl(theta, Tyrl, type, ref_gmst = NULL, ...)
 }
 \arguments{
 \item{theta}{Estimated GEV parameters}
@@ -15,6 +15,9 @@ compute_rl(theta, Tyrl, type, ref_gmst = NULL)
 
 \item{ref_gmst}{The reference value of the temporal covariate for which the
 RL is computed. Ignored when \code{type = "stationary"}.}
+
+\item{...}{For additional argument \code{rel_trend} for specifying the parametrisation which
+needs to be passed when \code{type = "scale"}}
 }
 \value{
 A tibble containg the estimated RL for each combination of \code{Tyrl} and

@@ -17,7 +17,9 @@ boot_sl(
   estimate_RL = TRUE,
   Tyrl = c(50, 100),
   ref_gmst = 0.8,
-  varmeth = "V2"
+  varmeth = "V2",
+  chain = TRUE,
+  ...
 )
 }
 \arguments{
@@ -52,6 +54,12 @@ If \code{"both"}, both parameter and RL estimates are computed.}
 RLs are estimated. Ignored when type is 'stationary'.}
 
 \item{varmeth}{The method used to estimate the covariance matrix of GEV parameters: 'V', 'V2', or 'both'.}
+
+\item{chain}{logical and only relevant for non-stationary models: Whether the method for
+covariance estimation should be based on chain rule}
+
+\item{...}{Further arguments passed to \code{fit_gev_univ}. When \code{type = scale}, one must
+pass the logical argument \code{rel_trend} which specifies the parametrisation of the scale model.}
 }
 \value{
 
@@ -82,4 +90,7 @@ sluniq_wb <- sluniq_wb \%>\% dplyr::select(-full_data)
 estim_lo <- slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
  type = "shift", hessian = TRUE)
 
+boot_sl(sluniq = sluniq_wb, slorig = full_slbm, blcksz = blcksz, nKblocks = .nKblocks,
+B = 10, type = "shift", ref_gmst = (c(0.8, 0.9)), Tyrl = c(50, 100), start_vals = estim_lo$mle,
+scale.link = make.link("identity"), reltol = 1e-09, estimate_RL = TRUE)
 }

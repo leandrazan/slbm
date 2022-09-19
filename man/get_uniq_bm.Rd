@@ -20,8 +20,9 @@ covariate. The specific length is necessary in order to match each
 sliding block maximum to a value of the temproal
 covariate. If too long, the vector will be cut off accordingly.
 To be provided if you assume the distribution of your
-data to be non-stationary and want to fit parameters accordingly.
-@param looplastblock logical; whether or not the first disjoint block of observations is
+data to be non-stationary and want to fit parameters accordingly.}
+
+\item{looplastblock}{logical; whether or not the first disjoint block of observations is
 concatenated to the last disjoint block of observations when computing the sample of sliding
 block maxima. Because of stationarity issues, this should only be used when
 sample is assumed to be stationary.}

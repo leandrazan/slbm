@@ -126,7 +126,8 @@ get_uniq_bm_boot <- function (data, blcksz, indexblock, temp_cvrt = NULL,
 #' @param type The model: 'stationary'. 'shift' or 'scale'
 #' @param ref_gmst The reference value of the temporal covariate for which the
 #' RL is computed. Ignored when \code{type = "stationary"}.
-#'
+#' @param ... For additional argument `rel_trend` for specifying the parametrisation which
+#'  needs to be passed when `type = "scale"`
 #' @return A tibble containg the estimated RL for each combination of \code{Tyrl} and
 #' \code{ref_gmst}.
 #' @export
@@ -524,6 +525,7 @@ errfct <- function(type) {
 #' only GEV parameter estimates are computed. If \code{TRUE}, only RL estimates are computed.
 #' If \code{"both"}, both parameter and RL estimates are computed.
 #' @param varmeth The method used to estimate the covariance matrix of GEV parameters: 'V' or 'V2'.
+#' @param conf.level A probability between 0 and 1; The confidence level for which confidence intervals are estimated.
 #' @param chain logical and only relevant for non-stationary models: Whether the method for
 #'  covariance estimation should be based on chain rule
 #' @param ... Further arguments passed to `fit_gev_univ`. When `type = scale`, one must
@@ -550,18 +552,19 @@ errfct <- function(type) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' blcksz <- 90
 #' ny <- 50
 #' ## with a shift in location
 #' yy <- evd::rgpd(ny*blcksz, shape = 0.2) + 2*rep(1:ny/ny, each = blcksz)
 #' ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
-#' B = 100, type = "shift", ref_gmst = c(0.5, 0.95))
+#' B = 100, type = "shift", ref_gmst = c(0.5, 0.95), Kblock = 4)
 #'
 #' ## observations are scaling w.r.t. GMST
-#' yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(2*rep(1:ny/ny, each = blcksz))
-#' ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
-#' B = 100, type = "scale", ref_gmst = c(0.5, 0.95))
-#'
+#' yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
+#' ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
+#' B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both")
+#' }
 ##### fix looplastblock = FALSE
 ci_student_boot_sl <- function(yy, blcksz,
                                Kblock = c(4,8,10),

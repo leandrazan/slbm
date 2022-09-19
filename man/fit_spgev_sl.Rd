@@ -70,6 +70,8 @@ parameter will be ignored and only the formulas concerning the scale parameter w
 \item{maxit, reltol ... }{Furhter components that are passed as a list to the
 \code{control} argument of \code{optim()}.}
 }}
+
+\item{hessian}{Logical; Whether to return the hessian of the negative log-Likelihood.}
 }
 \value{
 Returns a list containing the following components:

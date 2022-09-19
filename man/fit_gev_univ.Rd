@@ -94,5 +94,5 @@ fit_gev_univ(data = bms, hessian = TRUE, type = "shift")
 ### shift-fit with covariance matrix estimation:
 fit_gev_univ(data = bms, hessian = TRUE, type = "shift", return_cov = TRUE,
 varmeth = "V2", chain = TRUE, orig_slbm = blockmax(xx, 90, "sliding"),
-orig_cvrt = temp_cvrt)
+orig_cvrt = temp_cvrt, blcksz = 90)
 }
