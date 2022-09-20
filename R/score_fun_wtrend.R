@@ -679,7 +679,13 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
     temp_cvrt_score <- temp.cov[1:ncol(Y)]
     sigma0 <- est_par$mle[2]
     alpha0 <- est_par$mle[4]
-    sigmat <- sigma0*exp(alpha0*temp_cvrt_score)
+    mu0 <- est_par$mle[1]
+    if(add.args$rel_trend) {
+      sigmat <- sigma0*exp(alpha0/mu0*temp_cvrt_score)
+    }
+    else {
+      sigmat <- sigma0*exp(alpha0*temp_cvrt_score)
+    }
 
     Y[1, ] <- Y[1,]*sigmat
     Y[2, ] <- Y[2, ]*sigmat
@@ -689,7 +695,7 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
   fishest <- est_par$hessian/nsl
 
-  fishestinv <- solve(fishest)
+  fishestinv <- tryCatch(solve(fishest), error = function(a) array(dim = c(4,4)))
 
   # list with covariance matrices
   Gammahat <- compute_cov_stat_4chain(Y = Y, varmeth = varmeth, k = k, useobs = useobs, blcksz = blcksz)
