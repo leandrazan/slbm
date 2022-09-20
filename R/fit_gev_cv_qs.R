@@ -50,7 +50,6 @@
 #' cvfits %>% dplyr::select(-c(djdat, est.quants)) %>%
 #' dplyr::group_by(estimator, ps) %>%
 #' dplyr::summarise( MeanQS = mean(quant_score),  .groups = "drop")
-#'
 fit_gev_cv_qs <- function(djbm, slbm, conc_bm, method = "both", testset = "consec" ,
                        quants = 1-1/c(2,5,10, 20, 50, 100, 200 ),n.lo = 3,  n.cv = NULL,
                        fixpar = NULL){

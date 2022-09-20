@@ -42,8 +42,8 @@ Compute unique block maxima for bootstrap
 \examples{
 blcksz <- 90
 ny <- 50
-yy <- evd::rgpd(ny*blcksz, shape = 0.2)
-df.yy <- data.frame(Station = "X1", Obs = yy)
+xx <- evd::rgpd(ny*blcksz, shape = 0.2)
+df.xx <- data.frame(Station = "X1", Obs = xx)
 k <- 3
 ndata <- blcksz * ny
 .nKblocks <- ceiling(ndata/(k*blcksz))
@@ -51,7 +51,7 @@ indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
                          obsind = 1:ndata)
 
-sluniq_wb <- get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
+sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
                               temp_cvrt = NULL, looplastblock = TRUE,
                               returnfullsamp = TRUE)
 

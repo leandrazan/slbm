@@ -78,5 +78,4 @@ fixpar = NULL )
 cvfits \%>\% dplyr::select(-c(djdat, est.quants)) \%>\%
 dplyr::group_by(estimator, ps) \%>\%
 dplyr::summarise( MeanQS = mean(quant_score),  .groups = "drop")
-
 }

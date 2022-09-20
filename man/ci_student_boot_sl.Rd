@@ -5,7 +5,7 @@
 \title{Estimate RLs and CIs based on sliding blocks}
 \usage{
 ci_student_boot_sl(
-  yy,
+  x,
   blcksz,
   Kblock = c(4, 8, 10),
   B = 200,
@@ -24,7 +24,7 @@ ci_student_boot_sl(
 )
 }
 \arguments{
-\item{yy}{Numeric vector of data with daily resolution}
+\item{x}{Numeric vector of data with daily resolution}
 
 \item{blcksz}{The blocksize parameter}
 
@@ -71,7 +71,8 @@ A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
 Only differs from the RL that was estimated on the full sliding BM sample when
 \code{looplastblock = TRUE}.}
 \item{var_hat}{The estimated Variance of the RL estimation.}
-\item{q0975, q0025}{The 97.5\%- and 2.5\%- quantiles of the bootstrapped studentized RLs.}
+\item{qlow, qupp}{The \eqn{ 1-\alpha/2} and \eqn{\alpha/2}- quantiles of the bootstrapped studentized RLs,
+where \eqn{\alpha} is the chosen confidence level.}
 \item{lower, upper}{The lower and upper bound of the confidence interval.}
 \item{further parameters}{Denoted by  \code{mu, sigma0, gamma, alpha} for 'scale', and 'shift', and by
 \code{loc, scale, shape} for 'stationary', giving the estimated GEV parameters as estimated

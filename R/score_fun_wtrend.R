@@ -269,18 +269,16 @@ score.fun <- function(x, theta, temp.cov = NULL, type = "shift", chain = TRUE,
 }
 
 
-AllDiags <- function(inmat, sorted = TRUE) {
+AllDiags <- function(inmat) {
   Range <- ncol(inmat) - 1
   Range <- 0:Range
-  if (isTRUE(sorted)) Range <- Range[order(abs(Range))]
   lapply(Range, function(x) {
     inmat[row(inmat) == (col(inmat) - x)]
   })
 }
-AllDiags2 <- function(inmat, sorted = TRUE) {
+AllDiags2 <- function(inmat) {
   Range <- ncol(inmat) - 1
   Range <- 0:Range
-  if (isTRUE(sorted)) Range <- Range[order(abs(Range))]
   lapply(Range, function(x) {
     c(inmat[row(inmat) == (col(inmat) - x)], inmat[col(inmat) == (row(inmat) - x)])
   })

@@ -20,8 +20,8 @@
 #' @examples
 #' blcksz <- 90
 #' ny <- 50
-#' yy <- evd::rgpd(ny*blcksz, shape = 0.2)
-#' df.yy <- data.frame(Station = "X1", Obs = yy)
+#' xx <- evd::rgpd(ny*blcksz, shape = 0.2)
+#' df.xx <- data.frame(Station = "X1", Obs = xx)
 #' k <- 3
 #' ndata <- blcksz * ny
 #' .nKblocks <- ceiling(ndata/(k*blcksz))
@@ -29,7 +29,7 @@
 #'                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
 #'                          obsind = 1:ndata)
 #'
-#' sluniq_wb <- get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
+#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
 #'                               temp_cvrt = NULL, looplastblock = TRUE,
 #'                               returnfullsamp = TRUE)
 #'
@@ -313,8 +313,8 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #' @examples
 #' blcksz <- 90
 #' ny <- 100
-#' yy <-  evd::rgpd(ny*blcksz, shape = -0.2) + 2*rep(1:ny/ny, each = blcksz)
-#' df.yy <- data.frame(Station = "X1", Obs = yy)
+#' xx <-  evd::rgpd(ny*blcksz, shape = -0.2) + 2*rep(1:ny/ny, each = blcksz)
+#' df.xx <- data.frame(Station = "X1", Obs = xx)
 #' k <- 3
 #' ndata <- blcksz * ny
 #' .nKblocks <- ceiling(ndata/(k*blcksz))
@@ -322,7 +322,7 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #'                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
 #'                          obsind = 1:ndata)
 #'
-#' sluniq_wb <- get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
+#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
 #'                               temp_cvrt = rep(1:ny/ny, each = blcksz), looplastblock = TRUE,
 #'                               returnfullsamp = TRUE)
 #'
@@ -508,7 +508,7 @@ errfct <- function(type) {
 #' with respect to a temporal covariate.
 #' Confidence intervals are obtained via block bootstrap.
 #'
-#' @param yy Numeric vector of data with daily resolution
+#' @param x Numeric vector of data with daily resolution
 #' @param Kblock Value(s) of number of blocks making up one K-block within the block-bootstrap
 #' @param B Number of bootstrap iterations
 #' @param temp.cov temporal covariate, can be NULL
@@ -539,7 +539,8 @@ errfct <- function(type) {
 #'   Only differs from the RL that was estimated on the full sliding BM sample when
 #'   \code{looplastblock = TRUE}.}
 #'   \item{var_hat}{The estimated Variance of the RL estimation.}
-#'   \item{q0975, q0025}{The 97.5%- and 2.5%- quantiles of the bootstrapped studentized RLs.}
+#'   \item{qlow, qupp}{The \eqn{ 1-\alpha/2} and \eqn{\alpha/2}- quantiles of the bootstrapped studentized RLs,
+#'   where \eqn{\alpha} is the chosen confidence level.}
 #'   \item{lower, upper}{The lower and upper bound of the confidence interval.}
 #'   \item{further parameters}{Denoted by  \code{mu, sigma0, gamma, alpha} for 'scale', and 'shift', and by
 #'   \code{loc, scale, shape} for 'stationary', giving the estimated GEV parameters as estimated
@@ -566,7 +567,7 @@ errfct <- function(type) {
 #' B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both")
 #' }
 ##### fix looplastblock = FALSE
-ci_student_boot_sl <- function(yy, blcksz,
+ci_student_boot_sl <- function(x, blcksz,
                                Kblock = c(4,8,10),
                                B = 200, temp.cov = NULL,
                                type = "shift",
@@ -576,21 +577,21 @@ ci_student_boot_sl <- function(yy, blcksz,
                                estimate_RL = TRUE, conf.level = 0.05, chain = TRUE, ...) {
 
   add.args <- list(...)
-  # lenght of time series (of daily observations given in yy)
-  ndata <- length(yy)
+  # lenght of time series (of daily observations given in x)
+  ndata <- length(x)
 
   # the sample of disjoint block maxima
 
-  djbm <- slbm::blockmax(yy, r = blcksz, "disjoint")
+  djbm <- slbm::blockmax(x, r = blcksz, "disjoint")
 
 
   # compute the unique sliding BM and their frequency
-  df.yy <- data.frame(Station = "X1", Obs = yy)
+  df.x <- data.frame(Station = "X1", Obs = x)
 
-  sluniq_comp <- slbm::get_uniq_bm(yy, blcksz = blcksz, temp_cvrt = temp.cov,
+  sluniq_comp <- slbm::get_uniq_bm(x, blcksz = blcksz, temp_cvrt = temp.cov,
                                    looplastblock = FALSE)
 
-  slbm_orig <- slbm::blockmax(yy, r = blcksz, "sliding")
+  slbm_orig <- slbm::blockmax(x, r = blcksz, "sliding")
 
   temp_cvrt_orig <- temp.cov[1:length(slbm_orig)]
   # estimate on original block maxima sample
@@ -623,7 +624,7 @@ ci_student_boot_sl <- function(yy, blcksz,
   # compute the unique sliding BM within each of the
   # nKblocks of size Kblock, their frequency and their Kblockindex
   # (index of the bigger block of size K the sliding BM belongs to)
-  sluniq_wb <- slbm::get_uniq_bm_boot(df.yy, blcksz = blcksz, indexblock = indexblock,
+  sluniq_wb <- slbm::get_uniq_bm_boot(df.x, blcksz = blcksz, indexblock = indexblock,
                                 temp_cvrt = temp.cov, looplastblock = looplastblock,
                                 returnfullsamp = TRUE)
 
@@ -755,7 +756,6 @@ compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL
     return(res)
   }
   if(target == "Param") {
-
     # compute variance of RL estimation on Kblock sample
     par_vars <- diag(Covmat)
     parsK <- as.data.frame(t(estim_Kblock$mle))
@@ -763,31 +763,55 @@ compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL
     if(type == "stationary") {
       bootpars <-  bootres %>%  dplyr::select(loc, scale, shape, CovestV) %>% unique()
 
-      tstar_pars <- bootpars %>% dplyr::mutate( star =
-                                                  purrr::pmap(list(loc, scale, shape, CovestV),
-                                                              function(loc, scale, shape, CovestV) {
-                                                                dplyr::tibble((loc - parsK["loc"])/sqrt(CovestV[1,1]),
-                                                                              (scale - parsK["scale"])/sqrt(CovestV[2,2]),
-                                                                              (shape - parsK["shape"])/sqrt(CovestV[3,3]))
-                                                              }))
+      bootpars <- bootpars %>% dplyr::mutate(
+        purrr::map_dfr(CovestV, ~ { aa <- diag(.x)
+        names(aa) <- paste0("var" , names(aa))
+        as.data.frame(t(aa))}) ) %>%
+        dplyr::select(- CovestV)
+
+      funtstar <- function(vec, pars) {(vec[1:3] - pars)/ sqrt(vec[4:6])}
+      tstar_pars <- apply(bootpars, 1, funtstar, pars = parsK)
+      tstar_pars <- purrr::map_dfr(tstar_pars, ~.x)
+
+      # tstar_pars <- bootpars %>% dplyr::mutate( star =
+      #                                             purrr::pmap(list(loc, scale, shape, CovestV),
+      #                                                         function(loc, scale, shape, CovestV) {
+      #                                                           dplyr::tibble((loc - parsK["loc"])/sqrt(CovestV[1,1]),
+      #                                                                         (scale - parsK["scale"])/sqrt(CovestV[2,2]),
+      #                                                                         (shape - parsK["shape"])/sqrt(CovestV[3,3]))
+      #                                                         }))
      n.par <-  3
     }
     else {
       bootpars <-  bootres %>%  dplyr::select(mu, sigma, shape, alpha, CovestV) %>% unique()
 
-      tstar_pars <- bootpars %>% dplyr::mutate( star =
-                                                     purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
-                                                                 function(mu, sigma, shape, alpha, CovestV) {
-                                                                   dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
-                                                                                 (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
-                                                                                 (shape - parsK["shape"])/sqrt(CovestV[3,3]),
-                                                                                 (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
-                                                                 }))
+      bootpars <- bootpars %>% dplyr::mutate( purrr::map_dfr(CovestV, ~ { aa <- diag(.x)
+        names(aa) <- paste0("var" , names(aa))
+        as.data.frame(t(aa))
+
+      }) ) %>% dplyr::select(- CovestV)
+
+      funtstar <- function(vec, pars) {(vec[1:4] - pars)/ sqrt(vec[5:8])}
+      tstar_pars <- apply(bootpars, 1, funtstar, pars = parsK)
+      tstar_pars <- purrr::map_dfr(tstar_pars, ~.x)
+
+      # tstar_pars <- bootpars %>% dplyr::mutate( star =
+      #                                                purrr::pmap(list(mu, sigma, shape, alpha, CovestV),
+      #                                                            function(mu, sigma, shape, alpha, CovestV) {
+      #                                                              dplyr::tibble((mu - parsK["mu"])/sqrt(CovestV[1,1]),
+      #                                                                            (sigma - parsK["sigma"])/sqrt(CovestV[2,2]),
+      #                                                                            (shape - parsK["shape"])/sqrt(CovestV[3,3]),
+      #                                                                            (alpha - parsK["alpha"])/sqrt(CovestV[4,4]))
+      #                                                            }))
       n.par <- 4
     }
 
     # compute quantiles of the bootstrapped studentized parameter estimates
-    tstar_pars_quants <- tstar_pars %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+    # tstar_pars_quants <- tstar_pars %>% dplyr::select(star) %>% tidyr::unnest(cols = star) %>%
+    #   dplyr::summarise_at(1:n.par,  ~ quantile(.x, p = c( 1 - conf.level/2, conf.level/2), na.rm = TRUE)) %>%
+    #   dplyr::mutate(quant = paste0("q", c( 1 - conf.level/2, conf.level/2)))
+
+    tstar_pars_quants <- tstar_pars %>%
       dplyr::summarise_at(1:n.par,  ~ quantile(.x, p = c( 1 - conf.level/2, conf.level/2), na.rm = TRUE)) %>%
       dplyr::mutate(quant = paste0("q", c( 1 - conf.level/2, conf.level/2)))
 
