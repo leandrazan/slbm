@@ -24,14 +24,14 @@ nll_univ <- function(params,
       if(abs(gamma0) < 1e-8){
         zt <- exp( -(data$slbm - mut)/sigmat)
 
-        loglik <-  sum( data$n * (log(sigmat) + log(zt) + zt) , na.rm = TRUE)
+        loglik <-  sum( data$n * (log(sigmat) + log(zt) + zt) , na.rm = TRUE)/sum(data$n)
       }
       else{
         zt <- 1 + gamma0*(data$slbm - mut)/sigmat
         if(any(zt < 0, na.rm = TRUE)){ loglik <- 1e+10}
         else{
           loglik <- sum(data$n*( log(sigmat) + (1/gamma0 +1)*log(zt) + zt^(-1/gamma0)),
-                        na.rm = TRUE)
+                        na.rm = TRUE)/sum(data$n)
         }
       }
     }
@@ -43,7 +43,7 @@ nll_univ <- function(params,
       gamma0 <- c("shape" = params[3])
       alpha0 <- c("alpha" = params[4])
 
-      if(sigma0 <= 0) {return(1e+10)}
+      if(sigma0 <= 0 | gamma0 < -0.9) {return(1e+10)}
       else {
         mut <- mu0*exp(alpha0*data$temp_cvrt)
         sigmat <-  sigma0*exp(alpha0*data$temp_cvrt)
@@ -52,14 +52,14 @@ nll_univ <- function(params,
         if(abs(gamma0) < 1e-8){
           zt <- exp( -(data$slbm - mut)/sigmat)
 
-          loglik <-  sum( data$n * (log(sigmat) + log(zt) + zt) , na.rm = TRUE)
+          loglik <-  sum( data$n * (log(sigmat) + log(zt) + zt) , na.rm = TRUE)/sum(data$n)
         }
         else{
           zt <- 1 + gamma0*(data$slbm - mut)/sigmat
           if(any(zt < 0, na.rm = TRUE)){ loglik <- 1e+10}
           else{
             loglik <- sum(data$n*( log(sigmat) + (1/gamma0 +1)*log(zt) + zt^(-1/gamma0)),
-                          na.rm = TRUE)
+                          na.rm = TRUE)/sum(data$n)
           }
         }
       }
@@ -79,14 +79,14 @@ nll_univ <- function(params,
       if(abs(xi) < 1e-8){
         zt <- exp( -(data$slbm - mut)/sigma)
 
-        loglik <-  sum( data$n * (log(sigma) + log(zt) + zt) , na.rm = TRUE)
+        loglik <-  sum( data$n * (log(sigma) + log(zt) + zt) , na.rm = TRUE)/sum(data$n)
       }
       else{
         zt <- 1 + xi*(data$slbm - mut)/sigma
         if(any(zt < 0, na.rm = TRUE)){ loglik <- 1e+10}
         else{
           loglik <- sum(data$n*( log(sigma) + (1/xi +1)*log(zt) + zt^(-1/xi)),
-                        na.rm = TRUE)
+                        na.rm = TRUE)/sum(data$n)
         }
       }
     }
@@ -97,20 +97,20 @@ nll_univ <- function(params,
     sigma <- params[2]
     xi <- params[3]
 
-    if(sigma <= 0) {return(1e+10)}
+    if(sigma <= 0 ) {return(1e+10)}
     else {
 
       if(abs(xi) < 1e-8){
         z <- exp( -(data$slbm - mu)/sigma)
 
-        loglik <-  sum( data$n * (log(sigma) + log(z) + z) , na.rm = TRUE)
+        loglik <-  sum( data$n * (log(sigma) + log(z) + z) , na.rm = TRUE)/sum(data$n)
       }
       else{
         z <- 1 + xi*(data$slbm - mu)/sigma
         if(any(z < 0, na.rm = TRUE)){ loglik <- 1e+10}
         else{
           loglik <- sum(data$n*( log(sigma) + (1/xi +1)*log(z) + z^(-1/xi)),
-                        na.rm = TRUE)
+                        na.rm = TRUE)/sum(data$n)
         }
       }
     }
@@ -119,7 +119,7 @@ nll_univ <- function(params,
 }
 
 #' GEV fit with trend
-#' @description Fit a model that either shifts or scales with a temporal covariate
+#' @description Fit a GEV model that either shifts or scales with a temporal covariate
 #' to univariate data
 #'
 #' @param data A tibble containing values of the unique sliding BM along with the
@@ -142,16 +142,16 @@ nll_univ <- function(params,
 #' @details # Details on type
 #'
 #' The argument given in type determines whether the observations shift or scale
-#' with time. For a temporal covariate \eqn{(X_t)_t}, shifting corresponds to a shift
+#' with time. For a temporal covariate \eqn{(c_t)_t}, shifting corresponds to a shift
 #' in the location parameter as follows:
-#' \deqn{ \mu(t) = \mu + \alpha X_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
+#' \deqn{ \mu(t) = \mu + \alpha c_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
 #' while scaling corresponds to the model where
-#' \deqn{ \mu(t) = \mu \exp(\alpha X_t /\mu),  \sigma(t) = \sigma  \exp(\alpha X_t /\mu),
+#' \deqn{ \mu(t) = \mu \exp(\alpha c_t /\mu),  \sigma(t) = \sigma  \exp(\alpha c_t /\mu),
 #' \gamma(t) = \gamma,
 #' }
 #' as inspired by the Clausius-Clapeyron relation.
 #' The latter model can also be parametrised as
-#' \deqn{ \mu(t) = \mu \exp(\alpha X_t),  \sigma(t) = \sigma  \exp(\alpha X_t),
+#' \deqn{ \mu(t) = \mu \exp(\alpha c_t),  \sigma(t) = \sigma  \exp(\alpha c_t),
 #' \gamma(t) = \gamma,
 #' }
 #' which is why one needs to specify the argument `rel_trend` whenever `type = scale`
@@ -188,7 +188,7 @@ nll_univ <- function(params,
 #' varmeth = "V2", chain = TRUE, orig_slbm = blockmax(xx, 90, "sliding"),
 #' orig_cvrt = temp_cvrt, blcksz = 90)
 
-fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
+fit_gev_univ <- function(data, method = "BFGS", maxiter = 100, reltol = 1e-08,
                          hessian = FALSE, type, return_cov = FALSE, ...) {
 
   if(return_cov & !hessian) {
@@ -209,7 +209,7 @@ fit_gev_univ <- function(data, method = "BFGS", maxiter = 100,
   #print(start_vals)
   mlest <- optim(start_vals, fn = nll_univ,
                  data = data,
-                 method = method, control = list(maxit = maxiter),
+                 method = method, control = list(maxit = maxiter, reltol = reltol),
                  hessian = hessian, type = type, rel_trend = add.args$rel_trend)
   if(!(mlest$convergence == 0) ){print("Optimization didn't succeed.")}
 

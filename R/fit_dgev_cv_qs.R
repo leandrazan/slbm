@@ -29,7 +29,7 @@
 ##'
 #' @return Returns a tibble of dimension
 #' \code{length(quants)}\eqn{ \times } \code{length(ds)} \eqn{\times} \eqn{n_{cv} \times 2 },
-#' where \eqn{n_cv} is either the amount of possible testsets when the method for constructing the
+#' where \eqn{n_{cv}} is either the amount of possible testsets when the method for constructing the
 #' test sets is `consec`, or as specified in the argument `n.cv` when `testset = "random" `.
 #'  The tibble contains the estimated parameters, the estimation method,
 #' a code for the convergence (zero indicates successful convergence), the values of \eqn{p} for

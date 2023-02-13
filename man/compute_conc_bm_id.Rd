@@ -49,8 +49,8 @@ Because it takes quite long to remove the data of the years that are chosen as
 test set from the original data and then computing sliding block maxima, this
 functions computes the sliding block maxima of only those years that can be consecutive
 after removing observations belonging to a testset. E.g., when the testset consists of
-years 2002, 2003, 2004 and we have data from 2000 to 2010, we only need to compute
-sliding block maxima of the concatenated series with data from 2002 and 2005.
+years 2003, 2004, 2005 and we have data from 2000 to 2010, we only need to compute
+sliding block maxima of the concatenated series with data from 2002 and 2006.
 }
 \examples{
 dates <- seq(as.POSIXct("2000-01-01 00:00:00"),

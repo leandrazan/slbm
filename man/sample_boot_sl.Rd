@@ -19,6 +19,7 @@ sample_boot_sl(
   ref_gmst = NULL,
   varmeth = "V2",
   chain = TRUE,
+  shape_constraint = -0.9,
   ...
 )
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/student_boot_sl.R
 \name{compute_rl}
 \alias{compute_rl}
-\title{Compute RL of fitted GEV distribution}
+\title{Compute RL of (fitted) GEV distribution}
 \usage{
 compute_rl(theta, Tyrl, type, ref_gmst = NULL, ...)
 }
@@ -24,7 +24,7 @@ A tibble containg the estimated RL for each combination of \code{Tyrl} and
 \code{ref_gmst}.
 }
 \description{
-Compute RL of fitted GEV distribution
+Compute RL of (fitted) GEV distribution
 }
 \examples{
 compute_rl(theta = c(loc0 = 7, scale0 = 2, shape = 0.2, TempLoc1 = 2),

@@ -30,7 +30,7 @@ Only used during optimisation.}
 \value{
 Returns a list with the following components:
 \describe{
-\item{mle}{A \eqn{3 x d} dimensional matrix containing the estimated location,
+\item{mle}{A 3 x d dimensional matrix containing the estimated location,
 scale and shape parameter at each station.}
 \item{mledisp}{The estimated dispersion parameter, i.e. the ratio of the estimated
 location and scale parameters.}
@@ -63,7 +63,7 @@ parameters are the stationwise estimates.
 
 The scale parameters that are returned are the actual scale parameters.
 E.g., when using \eqn{link(\sigma) = \tilde{\sigma}} as link function,
-\eqn{\sigma =  linkinv{ \tilde{\sigma}}} is returned.
+\eqn{\sigma =  linkinv(\tilde{\sigma})} is returned.
 }
 \examples{
 xx <- sapply(1:5, function(x) evd::rgev(30, loc = 2*x, scale = x, shape = 0.2))

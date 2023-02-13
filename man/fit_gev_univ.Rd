@@ -8,6 +8,7 @@ fit_gev_univ(
   data,
   method = "BFGS",
   maxiter = 100,
+  reltol = 1e-08,
   hessian = FALSE,
   type,
   return_cov = FALSE,
@@ -39,21 +40,21 @@ the convergence code (ouput from \code{optim()}, 0 means everything was ok)
 and the hessian (if \code{hessian = TRUE}).
 }
 \description{
-Fit a model that either shifts or scales with a temporal covariate
+Fit a GEV model that either shifts or scales with a temporal covariate
 to univariate data
 }
 \section{Details on type}{
 The argument given in type determines whether the observations shift or scale
-with time. For a temporal covariate \eqn{(X_t)_t}, shifting corresponds to a shift
+with time. For a temporal covariate \eqn{(c_t)_t}, shifting corresponds to a shift
 in the location parameter as follows:
-\deqn{ \mu(t) = \mu + \alpha X_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
+\deqn{ \mu(t) = \mu + \alpha c_t , \sigma(t) = \sigma, \gamma(t) = \gamma}
 while scaling corresponds to the model where
-\deqn{ \mu(t) = \mu \exp(\alpha X_t /\mu),  \sigma(t) = \sigma  \exp(\alpha X_t /\mu),
+\deqn{ \mu(t) = \mu \exp(\alpha c_t /\mu),  \sigma(t) = \sigma  \exp(\alpha c_t /\mu),
 \gamma(t) = \gamma,
 }
 as inspired by the Clausius-Clapeyron relation.
 The latter model can also be parametrised as
-\deqn{ \mu(t) = \mu \exp(\alpha X_t),  \sigma(t) = \sigma  \exp(\alpha X_t),
+\deqn{ \mu(t) = \mu \exp(\alpha c_t),  \sigma(t) = \sigma  \exp(\alpha c_t),
 \gamma(t) = \gamma,
 }
 which is why one needs to specify the argument \code{rel_trend} whenever \code{type = scale}

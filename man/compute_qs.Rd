@@ -21,10 +21,10 @@ Compute the quantile score for an estimated quantile
 }
 \examples{
 set.seed(1)
-          train <- evd::rgev(100)
-          estpars <- evd::fgev(train[1:97])$estimate
-          quanthat <- evd::qgev(0.99, loc = estpars[1], scale = estpars[2],
-           shape = estpars[3])
-           compute_qs(train[98:100], quanthat, 0.99 )
+train <- evd::rgev(100)
+estpars <- evd::fgev(train[1:97])$estimate
+quanthat <- evd::qgev(0.99, loc = estpars[1], scale = estpars[2],
+   shape = estpars[3])
+compute_qs(train[98:100], quanthat, 0.99 )
 
 }

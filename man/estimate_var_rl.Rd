@@ -7,7 +7,7 @@
 estimate_var_rl(theta, Tyrl, type, ref_gmst = NULL, Covmat, ...)
 }
 \arguments{
-\item{theta}{A named of parameter estimates in the order:
+\item{theta}{A named vector of parameter estimates in the order:
 constant part of location parameter, constant part of scale parameter, shape parameter,
 trend parameter.}
 
@@ -25,9 +25,6 @@ is assumed.}
 
 \item{...}{For additional argument \code{rel_trend} for specifying the parametrisation which
 needs to be passed when \code{type = "scale"}.}
-}
-\value{
-
 }
 \description{
 Estimate Variance of RL estimation

@@ -20,6 +20,7 @@ ci_student_boot_sl(
   estimate_RL = TRUE,
   conf.level = 0.05,
   chain = TRUE,
+  returnBootSamples = FALSE,
   ...
 )
 }
@@ -88,19 +89,4 @@ Estimate RLs and respective confidence intervals of GEV fits based on
 sliding Block maxima, with possibility to consider a shift or a scaling of maxima
 with respect to a temporal covariate.
 Confidence intervals are obtained via block bootstrap.
-}
-\examples{
-\dontrun{
-blcksz <- 90
-ny <- 50
-## with a shift in location
-yy <- evd::rgpd(ny*blcksz, shape = 0.2) + 2*rep(1:ny/ny, each = blcksz)
-ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
-B = 100, type = "shift", ref_gmst = c(0.5, 0.95), Kblock = 4)
-
-## observations are scaling w.r.t. GMST
-yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
-ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
-B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both")
-}
 }

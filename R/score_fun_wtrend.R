@@ -269,6 +269,7 @@ score.fun <- function(x, theta, temp.cov = NULL, type = "shift", chain = TRUE,
 }
 
 
+
 AllDiags <- function(inmat) {
   Range <- ncol(inmat) - 1
   Range <- 0:Range
@@ -284,6 +285,11 @@ AllDiags2 <- function(inmat) {
   })
 }
 
+# maybe things can be speeded up if one passes a matrix that contains TRUE/FALSE for the according off-diagonal entries
+# of the matrix instead of calling AllDiags every time.
+
+# computes the covariance matrix of the scorefunctions evaluated in estimates of (mu(ct), sigma(ct), gamma) (shift model)
+# and in estimates of (0,1,gamma) based on scaled BM (scale model) so that one can apply the chain rule
 compute_cov_stat_4chain <- function(Y, varmeth, k, useobs, blcksz) {
 
   Yloc <- Y[1, 1:useobs]
@@ -350,9 +356,11 @@ compute_cov_stat_4chain <- function(Y, varmeth, k, useobs, blcksz) {
 }
 
 
+# applies the chain rule to the estimated covariance matrices
 compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
 
   add.args <- list(...)
+
 
   if(type == "shift") {
     meanct <- mean(temp_cvrt, na.rm = TRUE)
@@ -390,29 +398,6 @@ compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
 
       covstat2 <- cbind(covstat2, c(sigma14, sigma24, sigma34))
       covstat2 <- rbind(covstat2, c(sigma14, sigma24, sigma34, sigma44))
-
-      # meanexp_ac <- mean(exp(alpha0*temp_cvrt), na.rm = TRUE)
-      # meanexp_ac_c <- mean(temp_cvrt*exp(alpha0*temp_cvrt), na.rm = TRUE)
-      # meanexp_ac_sq <- mean(exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-      # meanexp_ac_c_sq <- mean(temp_cvrt*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-      # meanexp_ac_csq_sq <- mean(temp_cvrt^2*exp(alpha0*temp_cvrt)^2, na.rm = TRUE)
-      #
-      #
-      # covstat2 <- covstat
-      # covstat2[1:2, 1:2] <- meanexp_ac_sq*covstat[1:2, 1:2]
-      # covstat2[3, 1:2] <- meanexp_ac*covstat[3, 1:2]
-      # covstat2[1:2, 3] <- meanexp_ac*covstat[1:2, 3]
-      #
-      # alpha_ab <- c(meanexp_ac_c_sq*(mu0*covstat[1,1] + sigma0*covstat[1,2]),
-      #               meanexp_ac_c_sq*(mu0*covstat[1,2] + sigma0*covstat[2,2]),
-      #               meanexp_ac_c*(mu0*covstat[1,3] + sigma0*covstat[2,3])
-      # )
-      #
-      # sig44 <- meanexp_ac_csq_sq*(mu0*(mu0*covstat[1,1] + sigma0*covstat[1,2]) +
-      #                               sigma0*(mu0*covstat[1,2] + sigma0*covstat[2,2]))
-      #
-      # covstat2 <- rbind(covstat2, alpha_ab)
-      # covstat2 <- cbind(covstat2, c(alpha_ab,sig44))
 
       return( (Jinv %*% covstat2 %*% Jinv) )
     }
@@ -472,6 +457,7 @@ compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
 }
 
 
+# covariance matrix estimation without chain rule
 est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                          type = "shift",
                            varmeth = "both", ...){
@@ -494,7 +480,7 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
   # score.bdata <- score.function_univ(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
   #                                      type = type)
 
-  fishest <- est_par$hessian/nsl
+  fishest <- est_par$hessian
 
   fishestinv <- solve(fishest)
 
@@ -693,7 +679,7 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
   }
 
 
-  fishest <- est_par$hessian/nsl
+  fishest <- est_par$hessian
 
   fishestinv <- tryCatch(solve(fishest), error = function(a) array(dim = c(4,4)))
 
@@ -806,7 +792,8 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
     }
       else {
 
-        dmu0 <- expo*( - (ct^(-xi) -1)/xi *alpha0*ref_gmst/mu0^2*sigma0 + 1 - alpha0*ref_gmst/mu0)
+        dmu0 <-  expo*( 1 - alpha0*ref_gmst/mu0^2 *(sigma0 * (ct^(-xi) -1)/xi  + mu0))
+        # expo*( - (ct^(-xi) -1)/xi *alpha0*ref_gmst/mu0^2*sigma0 + 1 - alpha0*ref_gmst/mu0)
 
         dsigma0 <- expo*(ct^(-xi) -1)/xi
 
@@ -827,7 +814,7 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
         dmu0 <- expo
         dsigma0 <- expo*log(ct)
         dxi <- sigma0*expo*log(ct)^2/2
-        dalpha <- expo*ref_gmst*( sigma0 * (-log(ct)) +1)
+        dalpha <- expo*ref_gmst*( sigma0 * (-log(ct)) +  mu0)
       }
       else {
 
@@ -837,7 +824,7 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
 
         dxi <- sigma0*expo/xi^2*(1-ct^(-xi)*(xi*log(ct) +1))
 
-        dalpha <- expo*ref_gmst*( sigma0 * (ct^(-xi) -1)/xi +1)
+        dalpha <- expo*ref_gmst*( sigma0 * (ct^(-xi) -1)/xi + mu0)
       }
 
     }
@@ -854,7 +841,7 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
     xi <- theta["shape"]
 
     if(abs(xi) < 1e-08) {
-      return(c(1, -log(ct),  log(ct)^2/2 ))
+      return(c(1, -log(ct),  sigma*log(ct)^2/2 ))
     } else {
       return(c(1, (ct^(-xi) -1)/xi, sigma/xi^2*(1-ct^(-xi)*(xi*log(ct) +1) )))
     }
@@ -865,7 +852,7 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
 
 #' Estimate Variance of RL estimation
 #'
-#' @param theta A named of parameter estimates in the order:
+#' @param theta A named vector of parameter estimates in the order:
 #' constant part of location parameter, constant part of scale parameter, shape parameter,
 #' trend parameter.
 #' @param Tyrl The period for which the variance of the corresponding Return Level is to be
@@ -923,7 +910,7 @@ qdelta_rl <- function(theta, Tyrl, type, ref_gmst = NULL, rel_trend = TRUE) {
 #' rlhat
 #' estimate_var_rl(estim$mle, Tyrl = 100, type = "stationary", Covmat = covest$V)
 #'
-estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat, ...) {
+estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat, ...){
 
   add.args <- list(...)
   if(type == "stationary") {
@@ -936,12 +923,13 @@ estimate_var_rl <- function(theta, Tyrl, type, ref_gmst = NULL, Covmat, ...) {
                                   rel_trend = add.args$rel_trend)
   )
 
-  res <- purrr::map_dbl( qdelt, ~ .x %*% Covmat %*% .x)
+  res <- purrr::map_dbl( qdelt, ~ {.x %*% Covmat %*% .x})
   if(!(type == "stationary")) {
     names(res) <- paste("refGMST", ref_gmst)
   }
   res[res < 0] <- NA
   res
+
 }
 
 #

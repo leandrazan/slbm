@@ -1,11 +1,11 @@
-#' Compute Intensity duration process and yearly block maxima for one duration $d$
+#' Compute Intensity duration process and yearly block maxima for one duration \eqn{d}
 #'
 #' @param data a data frame or tibble of precipitation data, with a column named
 #' * datetime: containing the date-time of the observation as POSIXct, POSIXlt object
 #' * prec: containing the observed precipitation amount
 #'
 #' @param d the duration for which you want to compute the intensity process.
-#' It is the number $d$ of observations over which the the moving average
+#' It is the number \eqn{d} of observations over which the the moving average
 #' of precipitation is computed, computed within distinct years.
 #'
 #' @param resolution The resolution of the data, must be one of "hourly" or "daily"

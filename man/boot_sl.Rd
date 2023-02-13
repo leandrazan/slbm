@@ -61,9 +61,6 @@ covariance estimation should be based on chain rule}
 \item{...}{Further arguments passed to \code{fit_gev_univ}. When \code{type = scale}, one must
 pass the logical argument \code{rel_trend} which specifies the parametrisation of the scale model.}
 }
-\value{
-
-}
 \description{
 Studentized block bootstrap for sliding block maxima
 }
@@ -79,7 +76,7 @@ indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
                          obsind = 1:ndata)
 
-sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
+sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, K = k, indexblock = indexblock,
                               temp_cvrt = rep(1:ny/ny, each = blcksz), looplastblock = TRUE,
                               returnfullsamp = TRUE)
 

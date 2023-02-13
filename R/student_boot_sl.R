@@ -11,6 +11,7 @@
 #' oobservations are looped (first block concatenated to last block)
 #' @param returnfullsamp logical; whether the full (looped) sliding block maxima sample shall
 #' be returned. Needed for parametric covariance estimation.
+#' @param K Number of disjoint blocks that make up
 #'
 #' @return Returns a tibble with columns `Station`, `Kblockind`,`uniq_data` and, if `returnfullsamp  = TRUE`,
 #' `full_data`. These are the station reference, the block index of the blocks of size `K` times `blcksz`,
@@ -22,21 +23,30 @@
 #' ny <- 50
 #' xx <- evd::rgpd(ny*blcksz, shape = 0.2)
 #' df.xx <- data.frame(Station = "X1", Obs = xx)
-#' k <- 3
+#' k <- 4
 #' ndata <- blcksz * ny
 #' .nKblocks <- ceiling(ndata/(k*blcksz))
 #' indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
 #'                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
 #'                          obsind = 1:ndata)
 #'
-#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
+#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, K = k, indexblock = indexblock,
 #'                               temp_cvrt = NULL, looplastblock = TRUE,
 #'                               returnfullsamp = TRUE)
 #'
-# bei looplastblock = TRUE mit Kovariable
-get_uniq_bm_boot <- function (data, blcksz, indexblock, temp_cvrt = NULL,
+get_uniq_bm_boot <- function (data, blcksz, K,  indexblock, temp_cvrt = NULL,
                               looplastblock = TRUE, returnfullsamp = FALSE) {
 
+
+  ndat <- nrow(data)
+  # fill up last Kblock if it contains less observations than the other blocks
+  if(!(ndat/(K*blcksz)  == floor(ndat/(K*blcksz)))) {
+    m <- ceiling(ndat/blcksz)
+    mk <- floor(m/K)
+    diffmk <- K - m + mk*K
+    data <- data %>% dplyr::bind_rows(data[(ndat - diffmk*blcksz +1):ndat,  ])
+    indexblock <- indexblock %>% dplyr::bind_rows(data.frame(blockind = rep(mk +1, diffmk*blcksz ), obsind = ndat + (1:(diffmk*blcksz))))
+  }
   data$Kblockind <- indexblock$blockind
 
   if (!is.null(temp_cvrt)) {
@@ -119,7 +129,7 @@ get_uniq_bm_boot <- function (data, blcksz, indexblock, temp_cvrt = NULL,
   }
 }
 
-#' Compute RL of fitted GEV distribution
+#' Compute RL of (fitted) GEV distribution
 #'
 #' @param theta Estimated GEV parameters
 #' @param Tyrl The return periods for which the RLs are computed
@@ -217,8 +227,12 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
                            seed, reltol = 1e-08, estimate_RL = TRUE,
                            Tyrl = c(50, 100),
                            ref_gmst = NULL,
-                           varmeth = "V2", chain = TRUE, ...) {
+                           varmeth = "V2", chain = TRUE,
+                           shape_constraint = -0.9,  ...) {
+
+
   set.seed(seed)
+
   add.args <- list(...)
   # the nKblocks blocks of size Kblock that make up the bootstrap sample
   chosenblocks <- sample(1:nKblocks, nKblocks, replace = TRUE)
@@ -235,48 +249,53 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
   # the ML estimator based on weighted log-Likelihood computed on the bootstrap sample along with estimate of covariance matrix
   est_boot <-  slbm::fit_gev_univ(data = boot_samp, hessian = TRUE, type  = type, return_cov = TRUE, varmeth = varmeth,
                                   chain = chain, rel_trend = add.args$rel_trend,
-                                  orig_slbm =slorig$slbm, orig_cvrt = slorig$temp_cvrt, blcksz = blcksz)
+                                  orig_slbm = slorig$slbm, orig_cvrt = slorig$temp_cvrt, blcksz = blcksz)
 
-
-  if(estimate_RL == FALSE) {
-    return(est_boot)
-   # return(append( est_boot, estvar))
-  }
+  if(est_boot$mle["shape"] <= shape_constraint) { return(list(rl_boot = tibble::tibble(rl = NA, refGMST = NA, Year = NA),
+                                                              rlvarV2 = tibble::tibble(var_hat = NA, refGMST = NA, Year = NA),
+                                                              mle = c("mu" = NA, "sigma" = NA, "shape" = NA, "alpha" = NA),
+                                                              conv = NA,
+                                                              hessian = array(dim = c(4,4)), V2 = array(dim = c(4,4))))}
   else {
+    if(estimate_RL == FALSE) {
+      return(est_boot)
+     # return(append( est_boot, estvar))
+    }
+    else {
 
-    rlhat <- slbm::compute_rl(theta = est_boot$mle, Tyrl = Tyrl, type = type, ref_gmst = ref_gmst, rel_trend = add.args$rel_trend)
-    if(varmeth %in% c("both", "V2")) {
-      varrl_V2 <- purrr::map_dfr(Tyrl, ~ {
-        dplyr::tibble(var_hat =
-                 slbm::estimate_var_rl(theta = est_boot$mle, Tyrl = .x, type = type,
-                                       ref_gmst = ref_gmst, Covmat = est_boot$V2, rel_trend = add.args$rel_trend),
-               refGMST = ref_gmst, Year = .x) })
-    }
-    if(varmeth %in% c("both", "V")) {
-      varrl_V <- purrr::map_dfr(Tyrl, ~ {
-        dplyr::tibble(var_hat =
-                 slbm::estimate_var_rl(theta = est_boot$mle, Tyrl = .x, type = type,
-                                       ref_gmst = ref_gmst, Covmat = est_boot$V, rel_trend = add.args$rel_trend),
-               refGMST = ref_gmst, Year = .x) })
-    }
-    if(isTRUE(estimate_RL)) {
-      if(varmeth == "V") {
-        return(list(rl_boot = rlhat,  rlvarV = varrl_V))
+      rlhat <- slbm::compute_rl(theta = est_boot$mle, Tyrl = Tyrl, type = type, ref_gmst = ref_gmst, rel_trend = add.args$rel_trend)
+      if(varmeth %in% c("both", "V2")) {
+        varrl_V2 <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                   slbm::estimate_var_rl(theta = est_boot$mle, Tyrl = .x, type = type,
+                                         ref_gmst = ref_gmst, Covmat = est_boot$V2, rel_trend = add.args$rel_trend),
+                 refGMST = ref_gmst, Year = .x) })
       }
-      if(varmeth == "V2") { return(list(rl_boot = rlhat, rlvarV2 = varrl_V2)) }
-      else {return(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2)) }
-    }
-    else if(estimate_RL == "both") {
-
-
+      if(varmeth %in% c("both", "V")) {
+        varrl_V <- purrr::map_dfr(Tyrl, ~ {
+          dplyr::tibble(var_hat =
+                   slbm::estimate_var_rl(theta = est_boot$mle, Tyrl = .x, type = type,
+                                         ref_gmst = ref_gmst, Covmat = est_boot$V, rel_trend = add.args$rel_trend),
+                 refGMST = ref_gmst, Year = .x) })
+      }
+      if(isTRUE(estimate_RL)) {
         if(varmeth == "V") {
-          return(append(list(rl_boot = rlhat,  rlvarV = varrl_V), est_boot))
+          return(list(rl_boot = rlhat,  rlvarV = varrl_V))
         }
-        if(varmeth == "V2") { return(append(list(rl_boot = rlhat, rlvarV2 = varrl_V2), est_boot)) }
-        else {return(append(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2), est_boot)) }
+        if(varmeth == "V2") { return(list(rl_boot = rlhat, rlvarV2 = varrl_V2)) }
+        else {return(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2)) }
+      }
+      else if(estimate_RL == "both") {
+
+          if(varmeth == "V") {
+            return(append(list(rl_boot = rlhat,  rlvarV = varrl_V), est_boot))
+          }
+          if(varmeth == "V2") { return(append(list(rl_boot = rlhat, rlvarV2 = varrl_V2), est_boot)) }
+          else {return(append(list(rl_boot = rlhat, rlvarV = varrl_V, rlvarV2 = varrl_V2), est_boot)) }
+
+      }
 
     }
-
   }
 
 }
@@ -322,7 +341,7 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #'                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
 #'                          obsind = 1:ndata)
 #'
-#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, indexblock = indexblock,
+#' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, K = k, indexblock = indexblock,
 #'                               temp_cvrt = rep(1:ny/ny, each = blcksz), looplastblock = TRUE,
 #'                               returnfullsamp = TRUE)
 #'
@@ -355,7 +374,7 @@ boot_sl <- function(sluniq, slorig, nKblocks,
                                                  start_vals = start_vals,
                                                  type = type,
                                                  scale.link = scale.link,
-                                                 .x,
+                                                 seed = .x,
                                                  # reltol = 1e-08,
                                                  estimate_RL = estimate_RL,
                                                  Tyrl = Tyrl,
@@ -363,7 +382,7 @@ boot_sl <- function(sluniq, slorig, nKblocks,
                                                  varmeth = varmeth, chain = chain,
                                                  rel_trend = add.args$rel_trend))
 
-
+  browser()
   if(estimate_RL == FALSE) {
    if(varmeth == "both") {
       boot_parest <- list(resV =
@@ -564,8 +583,8 @@ errfct <- function(type) {
 #' ## observations are scaling w.r.t. GMST
 #' yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
 #' ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
-#' B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both")
-#' }
+#' B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both", rel_trend = FALSE)
+#'
 ##### fix looplastblock = FALSE
 ci_student_boot_sl <- function(x, blcksz,
                                Kblock = c(4,8,10),
@@ -574,7 +593,8 @@ ci_student_boot_sl <- function(x, blcksz,
                                scale.link = make.link("identity"),
                                Tyrl = c(50, 100), ref_gmst = c(0.8, 0.9), varmeth = "V2",
                                looplastblock = TRUE, reltol = 1e-09,
-                               estimate_RL = TRUE, conf.level = 0.05, chain = TRUE, ...) {
+                               estimate_RL = TRUE, conf.level = 0.05, chain = TRUE,
+                               returnBootSamples = FALSE, ...) {
 
   add.args <- list(...)
   # lenght of time series (of daily observations given in x)
@@ -624,7 +644,7 @@ ci_student_boot_sl <- function(x, blcksz,
   # compute the unique sliding BM within each of the
   # nKblocks of size Kblock, their frequency and their Kblockindex
   # (index of the bigger block of size K the sliding BM belongs to)
-  sluniq_wb <- slbm::get_uniq_bm_boot(df.x, blcksz = blcksz, indexblock = indexblock,
+  sluniq_wb <- slbm::get_uniq_bm_boot(df.x, blcksz = blcksz, K = k, indexblock = indexblock,
                                 temp_cvrt = temp.cov, looplastblock = looplastblock,
                                 returnfullsamp = TRUE)
 
@@ -656,7 +676,6 @@ ci_student_boot_sl <- function(x, blcksz,
     reltol = 1e-09, estimate_RL = estimate_RL, varmeth = varmeth,
     chain = chain, rel_trend = add.args$rel_trend)
 
-
     # put parameters into df
      df_estim_Kblock <- data.frame(t(estim_Kblock$mle))
 
@@ -664,15 +683,19 @@ ci_student_boot_sl <- function(x, blcksz,
      res_K <- get_quants_from_boot(bootres = bootres, estim_Kblock = estim_Kblock,
                                    ref_gmst = ref_gmst,
                                       Tyrl = Tyrl,
-                                   estimate_RL = estimate_RL, varmeth = varmeth, type = type, conf.level = conf.level,
-                                   rel_trend = add.args$rel_trend)
+                                   estimate_RL = estimate_RL, varmeth = varmeth,
+                                   type = type, conf.level = conf.level,
+                                   rel_trend = add.args$rel_trend,
+                                   var_crit = add.args$var_crit,
+                                   var_crit_rl = add.args$var_crit_rl)
 
      if(estimate_RL == "both") {
        paramest <- paramest %>%
          dplyr::bind_rows(res_K$res_params %>% dplyr::mutate( Kblock = k) )
 
        rlest <- rlest %>%
-         dplyr::bind_rows(res_K$res_rl %>% dplyr::mutate(df_estim_Kblock, Kblock = k) )
+         dplyr::bind_rows(res_K$res_rl %>% dplyr::mutate(df_estim_Kblock, Kblock = k))
+
 
      }
      else if(estimate_RL == FALSE) {
@@ -701,10 +724,29 @@ ci_student_boot_sl <- function(x, blcksz,
     }
   }
 
-  if(isTRUE(estimate_RL)) { return( list(res_rl = rlest)) }
-  if(estimate_RL == FALSE){ return( list(res_params = paramest)) }
-  if(estimate_RL == "both"){ return( list(res_params  = paramest,
+  if(!returnBootSamples) {
+     if(isTRUE(estimate_RL)) { return( list(res_rl = rlest)) }
+     if(estimate_RL == FALSE){ return( list(res_params = paramest)) }
+     if(estimate_RL == "both"){ return( list(res_params  = paramest,
                                           res_rl  = rlest)) }
+  }
+  else {
+    if(isTRUE(estimate_RL)) { return( list(res_rl = rlest, bootsamples = bootres)) }
+    if(estimate_RL == FALSE){
+      bootres <- bootres$resV2 %>% dplyr::mutate( purrr::map_dfr(CovestV, ~ { aa <- diag(.x)
+      names(aa) <- paste0("var" , names(aa))
+      as.data.frame(t(aa))
+
+      }) ) %>% dplyr::select(- CovestV)
+      bootres <- bootres$resV2 %>% tidyr::pivot_longer(cols  = 1:4, names_to = "parameter", values_to  = "boot_est")
+      bootres <- bootres %>% mutate(varhat_boot = purrr::map2_dbl(CovestV, parameter, ~ { .x[.y,  .y]})) %>% select(-CovestV)
+
+
+      return( list(res_params = paramest, bootsamples = bootres %>% left_join(paramest %>% select(parameter, par_est)))) }
+    if(estimate_RL == "both"){ return( list(res_params  = paramest,
+                                            res_rl  = rlest, bootsamples = bootres)) }
+  }
+
 
 
 
@@ -712,9 +754,14 @@ ci_student_boot_sl <- function(x, blcksz,
 
 
 compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL,
-                                type, ref_gmst, Covmat, conf.level = 0.05, target = "RL", rel_trend = NULL) {
+                                type, ref_gmst, Covmat, conf.level = 0.05, target = "RL", rel_trend = NULL,
+                                var_crit = NULL, var_crit_rl = NULL) {
 
   if(target == "RL") {
+
+    if(!is.null(var_crit_rl)) {
+      bootres <- bootres %>% dplyr::filter(var_hat > var_crit_rl)
+    }
     # compute variance of RL estimation on Kblock sample
     varrl <- purrr::map_dfr(Tyrl, ~ {
       dplyr::tibble(var_hat =
@@ -791,6 +838,10 @@ compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL
 
       }) ) %>% dplyr::select(- CovestV)
 
+      if(!is.null(var_crit)) {
+        bootpars <- bootpars %>% dplyr::filter(varshape > var_crit)
+      }
+
       funtstar <- function(vec, pars) {(vec[1:4] - pars)/ sqrt(vec[5:8])}
       tstar_pars <- apply(bootpars, 1, funtstar, pars = parsK)
       tstar_pars <- purrr::map_dfr(tstar_pars, ~.x)
@@ -826,7 +877,8 @@ compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL
     parsK <- tidyr::pivot_longer(parsK, cols = 1:n.par, names_to = "parameter", values_to = "par_est")
 
     res_pars <- parsK %>% dplyr::left_join(lower_bounds, by = "parameter") %>%
-      dplyr::left_join(upper_bounds, by = "parameter")
+      dplyr::left_join(upper_bounds, by = "parameter") %>%
+      dplyr::mutate(varest = par_vars)
 
     return(res_pars)
   }
@@ -834,10 +886,10 @@ compute_quants_boot <- function(bootres, Tyrl, estim_Kblock, rlhat_Kblock = NULL
 
 
 get_quants_from_boot <- function(bootres, estim_Kblock, ref_gmst,
-                                 Tyrl,  estimate_RL, varmeth, type, conf.level = 0.05, ...) {
+                                 Tyrl,  estimate_RL, varmeth, type, conf.level = 0.05,
+                                 var_crit = NULL, var_crit_rl = NULL, ...) {
 
   add.args <- list(...)
-
   Covlist <- switch(varmeth, "both" = list(estim_Kblock$V, estim_Kblock$V2),
                     "V" = list(estim_Kblock$V),
                     "V2" = list(estim_Kblock$V2))
@@ -845,7 +897,8 @@ get_quants_from_boot <- function(bootres, estim_Kblock, ref_gmst,
   if(estimate_RL %in% c(FALSE, "both")) {
     res_pars <- purrr::map2(.x = bootres, .y = Covlist,
                 ~ compute_quants_boot(bootres = .x,  Tyrl = Tyrl, estim_Kblock = estim_Kblock,
-                                      type = type, ref_gmst = ref_gmst, Covmat = .y, conf.level = conf.level, target = "Param"))
+                                      type = type, ref_gmst = ref_gmst, Covmat = .y,
+                                      conf.level = conf.level, target = "Param", var_crit = var_crit))
 
     res_pars <- purrr::map2_dfr(res_pars, names(res_pars),  ~ .x %>% dplyr::mutate(varmeth = .y))
   }
@@ -872,7 +925,7 @@ get_quants_from_boot <- function(bootres, estim_Kblock, ref_gmst,
                   ~ compute_quants_boot(bootres = .x,  Tyrl = Tyrl, estim_Kblock = estim_Kblock,
                                         rlhat_Kblock = rlhat_Kblock,
                           type = type, ref_gmst = ref_gmst, Covmat = .y, conf.level = conf.level, target = "RL",
-                          rel_trend = add.args$rel_trend))
+                          rel_trend = add.args$rel_trend, var_crit_rl = var_crit_rl))
 
     res <-  purrr::map2_dfr(res, names(res),  ~ .x %>% dplyr::mutate(varmeth = .y))
   }
@@ -880,5 +933,143 @@ get_quants_from_boot <- function(bootres, estim_Kblock, ref_gmst,
   if(estimate_RL == FALSE){ return(list(res_params = res_pars)) }
   if(estimate_RL == "both"){ return( list(res_params  = res_pars,
                                           res_rl  = res)) }
+
+}
+
+
+
+
+ci_student_boot_samples <- function(x, blcksz,
+                               Kblock = c(4,8,10),
+                               B = 200, temp.cov = NULL,
+                               type = "shift",
+                               scale.link = make.link("identity"),
+                               Tyrl = c(50, 100), ref_gmst = c(0.8, 0.9), varmeth = "V2",
+                               looplastblock = TRUE, reltol = 1e-09,
+                               estimate_RL = TRUE, conf.level = 0.05, chain = TRUE,
+                               returnBootSamples = FALSE, ...) {
+
+  add.args <- list(...)
+  # lenght of time series (of daily observations given in x)
+  ndata <- length(x)
+
+  # the sample of disjoint block maxima
+
+  djbm <- slbm::blockmax(x, r = blcksz, "disjoint")
+
+
+  # compute the unique sliding BM and their frequency
+  df.x <- data.frame(Station = "X1", Obs = x)
+
+  sluniq_comp <- slbm::get_uniq_bm(x, blcksz = blcksz, temp_cvrt = temp.cov,
+                                   looplastblock = FALSE)
+
+  slbm_orig <- slbm::blockmax(x, r = blcksz, "sliding")
+
+  temp_cvrt_orig <- temp.cov[1:length(slbm_orig)]
+  # estimate on original block maxima sample
+  est_sl <- tryCatch(slbm::fit_gev_univ(data = sluniq_comp, hessian = TRUE, type = type,
+                                        #  return_cov = TRUE, varmeth = varmeth, chain = chain,
+                                        rel_trend = add.args$rel_trend
+                                        #  orig_slbm = slbm_orig, orig_cvrt = temp_cvrt_orig, blcksz = blcksz
+  ),  error = errfct(type))
+
+  rlest <- dplyr::tibble()
+
+  paramest <- dplyr::tibble()
+
+  est_sl_df <- data.frame(t(est_sl$mle))
+
+  # pefrom block bootstrap for each block bootstrap parameter k
+  for(k in Kblock) {
+    # number of blocks of size K*blcksz that are observed
+    .nKblocks <- ceiling(ndata/(k*blcksz))
+
+
+    # for each observation: which Kblock does it belong to, and is it in the last
+    # block of site blcksz within that larger Kblock
+    indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
+                                          rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
+                             obsind = 1:ndata)
+
+
+    # compute the unique sliding BM within each of the
+    # nKblocks of size Kblock, their frequency and their Kblockindex
+    # (index of the bigger block of size K the sliding BM belongs to)
+    sluniq_wb <- slbm::get_uniq_bm_boot(df.x, blcksz = blcksz, indexblock = indexblock, K = k,
+                                        temp_cvrt = temp.cov, looplastblock = looplastblock,
+                                        returnfullsamp = TRUE)
+
+    full_slbm_Kblock <- sluniq_wb %>% dplyr::select(-uniq_data)
+    sluniq_wb <- sluniq_wb %>% dplyr::select(-full_data)
+
+    # estimate Variance of Kblock estimator
+    slorig_Kblock <- purrr::map_dfr(full_slbm_Kblock$full_data, ~ .x)
+    #  compute ML estimator
+    estim_Kblock <- tryCatch(slbm::fit_gev_univ(tidyr::unnest(sluniq_wb, cols = uniq_data),
+                                                type = type, hessian = TRUE, rel_trend = add.args$rel_trend,
+                                                return_cov = TRUE,
+                                                varmeth = varmeth, chain = chain,
+                                                orig_slbm = slorig_Kblock$slbm, orig_cvrt = slorig_Kblock$temp_cvrt, blcksz = blcksz
+    ), error = errfct(type))
+
+    # bootstrap RLs and compute their parametric variance estimation
+    bootres <- slbm::boot_sl(
+      sluniq = sluniq_wb,
+      slorig = full_slbm_Kblock,
+      blcksz = blcksz,
+      nKblocks = .nKblocks,
+      B = B,
+      type = type,
+      ref_gmst = ref_gmst,
+      Tyrl = Tyrl,
+      start_vals = estim_Kblock$mle,
+      scale.link = make.link("identity"),
+      reltol = 1e-09, estimate_RL = estimate_RL, varmeth = varmeth,
+      chain = chain, rel_trend = add.args$rel_trend)
+
+    #browser()
+    # put parameters into df
+    df_estim_Kblock <- data.frame(parameter = names(estim_Kblock$mle),
+                                  par_est = unname(estim_Kblock$mle),
+                                  var_hat = diag(estim_Kblock$V2))
+
+
+
+
+
+
+      bootres_rl <- bootres$resV2 %>% select(rl, refGMST, Year, var_hat) %>%
+        rename("rlboot" = "rl", "var_hat_boot" = "var_hat")
+
+      bootres <- bootres$resV2 %>% select(mu, sigma, shape, alpha, CovestV) %>%
+        tidyr::pivot_longer(cols  = 1:4, names_to = "parameter", values_to  = "boot_est") %>%
+        mutate(varhat_boot = purrr::map2_dbl(CovestV, parameter, ~ { .x[.y,  .y]})) %>% select(-CovestV)
+
+
+      rlhat <- slbm::compute_rl(estim_Kblock$mle, Tyrl = Tyrl, type = type, ref_gmst = ref_gmst)
+
+      varrl <- purrr::map_dfr(Tyrl, ~ {
+        dplyr::tibble(var_hat =
+                        slbm::estimate_var_rl(theta = estim_Kblock$mle, Tyrl = .x, type = type,
+                                              ref_gmst = ref_gmst, Covmat = estim_Kblock$V2, rel_trend = rel_trend),
+                      refGMST = ref_gmst, Year = .x) })
+
+      bootres_rl <- bootres_rl %>% left_join(varrl,  by = c("refGMST", "Year")) %>%
+        left_join(rlhat,  by = c("refGMST", "Year"))
+
+      bootres <- bootres %>% left_join(df_estim_Kblock)
+
+
+      rlest <- rlest %>% bind_rows(tibble::tibble(boot_samples = list(bootres_rl), Kblock = k))
+      paramest <- paramest %>% bind_rows(tibble::tibble(boot_samples = list(bootres), Kblock = k))
+  }
+
+
+
+  return(list(res_rl = rlest, res_par = paramest))
+
+
+
 
 }

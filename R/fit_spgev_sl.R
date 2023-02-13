@@ -8,7 +8,7 @@
 ## temp.cov for computing starting values with SpatialExtremes when depending on temporal cov.
 #  type = IF for homogeneity assumption
 
-#' Fit spatial-temporal GEV model based on sliding block maxima
+#' Fit spatio-temporal GEV model based on sliding block maxima
 #'
 #' @param data A nested tibble containing the unique sliding block maxima and their
 #' frequency for the considered locations as obtained from the function
