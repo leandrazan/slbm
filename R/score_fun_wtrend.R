@@ -638,6 +638,39 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 }
 
 
+#' Estimate covariance matrix based on chain rule
+#'
+#' @param orig_slbm Sample of sliding block maxima
+#' @param est_par estimated parameter vector
+#' @param blcksz blocksize parameter
+#' @param temp.cov vector of temporal covariate, should have same length as sample
+#' @param type either \code{shift} or \code{scale}.
+#' WARNING: for the \code{shift}-model I'm not sure anymore whether the scaling
+#' part is missing or if it's hidden somewhere in the computations. Should be checked.
+#' @param varmeth the method for estimating the covariance of overlapping observations,
+#' either \code{V} or \code{V2}
+#' @param ... Further parameters. When \code{type = "scale"},
+#' \code{rel_trend = TRUE} or \code{rel_trend = FALSE} needs to be specified here.
+#'
+#' @return A list containing the covariance matrices estimated with the chosen methods
+#' @export
+#'
+#' @examples
+#' ### simulate some data with a linear trend
+#' xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
+#' ## temporal covariate for sliding BM
+#' temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
+#'
+#' ## compute sample of uniuqe sliding BM
+#' bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
+#'
+#' ## full sample of sliding for estimaing the covariance matrix
+#' slbm <- blockmax(xx, r = 90, "sliding")
+#' estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
+#'
+#' est_var_chain(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
+#' type = "shift", varmeth = "V2")
+#'
 est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                           type = "shift",
                           varmeth = "both", ...) {
@@ -673,6 +706,7 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
       sigmat <- sigma0*exp(alpha0*temp_cvrt_score)
     }
 
+    ## Because of scaling with T_\sigma(ct)^{-1}
     Y[1, ] <- Y[1,]*sigmat
     Y[2, ] <- Y[2, ]*sigmat
 
@@ -717,18 +751,18 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 #'
 #' @examples
 #' ### simulate some data with a linear trend
-# xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
-# ## temporal covariate for sliding BM
-# temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
-#
-# ## compute sample of uniuqe sliding BM
-# bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
-#
-# ## full sample of sliding for estimaing the covariance matrix
-# slbm <- blockmax(xx, r = 90, "sliding")
-# estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
-# est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
-# varmeth = "both", type = "shift", chain = TRUE)
+#' xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
+#' ## temporal covariate for sliding BM
+#' temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
+#'
+#' ## compute sample of uniuqe sliding BM
+#' bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
+#'
+#' ## full sample of sliding for estimaing the covariance matrix
+#' slbm <- blockmax(xx, r = 90, "sliding")
+#' estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
+#' est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
+#' varmeth = "both", type = "shift", chain = TRUE)
 est_var_univ <-  function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
                           type = "shift",
                           varmeth = "both", chain = TRUE, ...) {

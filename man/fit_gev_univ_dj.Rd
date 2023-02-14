@@ -33,6 +33,10 @@ relevant when 'type == "shift"'}
 
 \item{return_cov}{logical; whether to return a covariance matrix}
 }
+\value{
+A list with estimated parameter values, convergence code etc., and
+covariance matrix (if desired)
+}
 \description{
 GEV fit to disjoint block maxima
 }

@@ -61,6 +61,9 @@ covariance estimation should be based on chain rule}
 \item{...}{Further arguments passed to \code{fit_gev_univ}. When \code{type = scale}, one must
 pass the logical argument \code{rel_trend} which specifies the parametrisation of the scale model.}
 }
+\value{
+A list with bootstrapped parameter/RL estimates and their estimated variances
+}
 \description{
 Studentized block bootstrap for sliding block maxima
 }

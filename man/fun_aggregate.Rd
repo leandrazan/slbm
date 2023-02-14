@@ -2,7 +2,7 @@
 % Please edit documentation in R/fun_aggregate.R
 \name{fun_aggregate}
 \alias{fun_aggregate}
-\title{Compute Intensity duration process and yearly block maxima for one duration $d$}
+\title{Compute Intensity duration process and yearly block maxima for one duration \eqn{d}}
 \usage{
 fun_aggregate(data, d, resolution = "hourly", seasonlength = 365)
 }
@@ -14,7 +14,7 @@ fun_aggregate(data, d, resolution = "hourly", seasonlength = 365)
 }}
 
 \item{d}{the duration for which you want to compute the intensity process.
-It is the number $d$ of observations over which the the moving average
+It is the number \eqn{d} of observations over which the the moving average
 of precipitation is computed, computed within distinct years.}
 
 \item{resolution}{The resolution of the data, must be one of "hourly" or "daily"}
@@ -31,7 +31,7 @@ corresponding year and duration
 }
 }
 \description{
-Compute Intensity duration process and yearly block maxima for one duration $d$
+Compute Intensity duration process and yearly block maxima for one duration \eqn{d}
 }
 \examples{
 dates <- seq(as.POSIXct("2000-01-01 00:00:00"),

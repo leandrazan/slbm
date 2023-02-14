@@ -326,7 +326,7 @@ sample_boot_sl <- function(nKblocks, sluniq, slorig,
 #'  covariance estimation should be based on chain rule
 #' @param ... Further arguments passed to `fit_gev_univ`. When `type = scale`, one must
 #'  pass the logical argument `rel_trend` which specifies the parametrisation of the scale model.
-#' @return
+#' @return A list with bootstrapped parameter/RL estimates and their estimated variances
 #' @export
 #'
 #' @examples
@@ -382,7 +382,7 @@ boot_sl <- function(sluniq, slorig, nKblocks,
                                                  varmeth = varmeth, chain = chain,
                                                  rel_trend = add.args$rel_trend))
 
-  browser()
+
   if(estimate_RL == FALSE) {
    if(varmeth == "both") {
       boot_parest <- list(resV =
@@ -551,7 +551,7 @@ errfct <- function(type) {
 #'  pass the logical argument `rel_trend` which specifies the parametrisation of the scale model.
 #'
 #' @return When \code{estimate_RL = TRUE}:
-#'  A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
+#'  A list with a tibble containing for each combination of \code{Year}, \code{ref_gmst} and
 #' \code{Kblocks} the following values:
 #'  \describe{
 #'   \item{rl}{The RL that was estimated on the concatenated Kblock-sample.
@@ -566,9 +566,13 @@ errfct <- function(type) {
 #'   on the Kblock-sample.}
 #'   }
 #'
-#'   When \code{estimate_RL = "both"}: A list containing the above tibble as list element
-#'   named \code{res_rl} as well as a tibble with confidence interval bounds for each of the
+#'    When \code{estimate_RL = FALSE}: A list containing the above tibble as list element
+#'   and a second tibble in the list element named \code{res_params},
+#'   that contains a tibble with confidence interval bounds for each of the
 #'   parameter vectors.
+#'
+#'   When \code{estimate_RL = "both"}: A list containing both of the above tibbles.
+#'
 #' @export
 #'
 #' @examples
@@ -584,7 +588,7 @@ errfct <- function(type) {
 #' yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
 #' ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
 #' B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both", rel_trend = FALSE)
-#'
+#' }
 ##### fix looplastblock = FALSE
 ci_student_boot_sl <- function(x, blcksz,
                                Kblock = c(4,8,10),

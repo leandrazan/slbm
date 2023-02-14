@@ -21,7 +21,7 @@ library(tidyr)
 library(ggplot2)
 ```
 
-This vignette describes the (non-)stationary univariate that can be fitted based on 
+This vignette describes the (non-)stationary univariate models that can be fitted based on 
 sliding block maxima with the `slbm` package. 
 
 
@@ -49,10 +49,14 @@ The models for the location and scale parameter are
 
 * scale model:
 
+\[ \mu(t) =  \mu \exp\left( \alpha\mathrm{GMST}(t) \right), \
+   \sigma(t) = \sigma \exp\left( \alpha \mathrm{GMST}(t) \right).   \]
+   
+* scale model, with trend relative to location parameter:
+
 \[ \mu(t) =  \mu \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right), \
    \sigma(t) = \sigma \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right).   \]
    
-
 The usual definition of a return level is not compatible with the non-stationary
 models. One has to choose a *reference climate* for which one wants to estimate the 
 Return Level. For example, an estimate for the 100-year RL in the climate of 1970 is given through
@@ -82,7 +86,7 @@ where here $\vartheta$ denotes one of the parameters or RLs that are to be estim
 
 
 
-## Application on real data
+## Application to real data
 
 In attribution studies, the shift model is often used for seasonal maxima of 
 daily maximum temperatures, while the scale model is usually applied when analysing 
@@ -136,7 +140,7 @@ parameter as $K = 4$.
 blcksz <- 92
 refgmst <- gmst %>% filter(Year %in% c(1970, 2010))
 set.seed(1)
-res_shift <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
+res_shift <- ci_student_boot_sl(x = dailyAach$Aachen, blcksz = blcksz,
                    temp.cov = rep(gmst$smoothedGMST, each = blcksz),
                    B = 200, type = "shift", Tyrl = 100, Kblock = 4,
                    ref_gmst = refgmst$smoothedGMST, estimate_RL = "both"
@@ -149,7 +153,7 @@ We can compare this model fit to the fit of the stationary model.
 
 ```{r}
 set.seed(1)
-res_stationary <- ci_student_boot_sl(yy = dailyAach$Aachen, blcksz = blcksz,
+res_stationary <- ci_student_boot_sl(x = dailyAach$Aachen, blcksz = blcksz,
                                  B = 200, type = "stationary", Tyrl = 100, Kblock = 4,
                                  estimate_RL = "both"
                    )
@@ -183,10 +187,11 @@ to compare the RLs for reference climates of years 1970 and 2010.
 ```{r}
 blcksz <- 92
 refgmst <- gmst %>% filter(Year %in% c(1970, 2010))
-res_scale <- ci_student_boot_sl(yy = summerobs$cumPrec, blcksz = blcksz,
+res_scale <- ci_student_boot_sl(x = summerobs$cumPrec, blcksz = blcksz,
                    temp.cov = rep(gmst$smoothedGMST, each = blcksz),
                    B = 200, type = "scale", Tyrl = 100, Kblock = 4,
-                   ref_gmst = refgmst$smoothedGMST, estimate_RL = "both"
+                   ref_gmst = refgmst$smoothedGMST, estimate_RL = "both",
+                   rel_trend = FALSE
                    )
 res_scale$res_par  # results for parameter estimation
 res_scale$res_rl  # results for RL estimation

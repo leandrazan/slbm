@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_spgev_sl.R
 \name{fit_spgev_sl}
 \alias{fit_spgev_sl}
-\title{Fit spatial-temporal GEV model based on sliding block maxima}
+\title{Fit spatio-temporal GEV model based on sliding block maxima}
 \usage{
 fit_spgev_sl(
   data,
@@ -84,7 +84,7 @@ log-Likelihood and its gradient, respectively, as obtained from optim.}
 }
 }
 \description{
-Fit spatial-temporal GEV model based on sliding block maxima
+Fit spatio-temporal GEV model based on sliding block maxima
 }
 \examples{
 

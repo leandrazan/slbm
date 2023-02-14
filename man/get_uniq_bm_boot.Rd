@@ -20,6 +20,8 @@ contains daily observations}
 
 \item{blcksz}{The blocksize parameter}
 
+\item{K}{Number of disjoint blocks that make up}
+
 \item{indexblock}{A matrix with columns \code{blockind} and \code{obsind}, where \code{obsind} is the
 consecutive counter of the observations (from to \code{nrow(data)}) and \code{blockind} is the
 index of the K-block the observation belongs to (here, K is the blockbootstrap parameter).}

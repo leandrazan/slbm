@@ -77,8 +77,9 @@ get_uniq_bm <- function(data, blcksz, temp_cvrt = NULL, looplastblock = FALSE){
     }
     }
 
-  # if temporal covariate is used
+
   else {
+    # if temporal covariate is used
     if(!is.null(temp_cvrt)) {
 
       data <- data %>% dplyr::group_by(Station) %>%

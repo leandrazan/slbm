@@ -105,7 +105,8 @@ nll_univ_dj <- function(params,
 #' relevant when 'type == "shift"'
 #' @param return_cov logical; whether to return a covariance matrix
 #'
-#' @return
+#' @return A list with estimated parameter values, convergence code etc., and
+#'  covariance matrix (if desired)
 #' @export
 #'
 #' @examples

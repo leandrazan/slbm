@@ -17,7 +17,8 @@
 #'         corresponding year and duration. One tibble for each duration $d$.
 #' @export
 #'
-#' @examples dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
+#' @examples
+#' dates <- seq(as.POSIXct("2000-01-01 00:00:00"),
 #' as.POSIXct("2001-12-31 23:00:00"),by = 'hour')
 #' prec <- rgamma(length(dates), shape = 0.1)
 #' ExampleData <- data.frame(datetime = dates, prec = prec)

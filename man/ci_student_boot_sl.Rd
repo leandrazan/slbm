@@ -65,7 +65,7 @@ pass the logical argument \code{rel_trend} which specifies the parametrisation o
 }
 \value{
 When \code{estimate_RL = TRUE}:
-A tibble containing for each combination of \code{Year}, \code{ref_gmst} and
+A list with a tibble containing for each combination of \code{Year}, \code{ref_gmst} and
 \code{Kblocks} the following values:
 \describe{
 \item{rl}{The RL that was estimated on the concatenated Kblock-sample.
@@ -80,13 +80,31 @@ where \eqn{\alpha} is the chosen confidence level.}
 on the Kblock-sample.}
 }
 
-When \code{estimate_RL = "both"}: A list containing the above tibble as list element
-named \code{res_rl} as well as a tibble with confidence interval bounds for each of the
+When \code{estimate_RL = FALSE}: A list containing the above tibble as list element
+and a second tibble in the list element named \code{res_params},
+that contains a tibble with confidence interval bounds for each of the
 parameter vectors.
+
+When \code{estimate_RL = "both"}: A list containing both of the above tibbles.
 }
 \description{
 Estimate RLs and respective confidence intervals of GEV fits based on
 sliding Block maxima, with possibility to consider a shift or a scaling of maxima
 with respect to a temporal covariate.
 Confidence intervals are obtained via block bootstrap.
+}
+\examples{
+\dontrun{
+blcksz <- 90
+ny <- 50
+## with a shift in location
+yy <- evd::rgpd(ny*blcksz, shape = 0.2) + 2*rep(1:ny/ny, each = blcksz)
+ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz),
+B = 100, type = "shift", ref_gmst = c(0.5, 0.95), Kblock = 4)
+
+## observations are scaling w.r.t. GMST
+yy <- evd::rgpd(ny*blcksz, shape = 0.2)*exp(0.5*rep(1:ny/ny, each = blcksz))
+ci_student_boot_sl(yy, blcksz = 90, temp.cov = rep(1:ny/ny, each = blcksz), Kblock = 4,
+B = 100, type = "scale", ref_gmst = c(0.5, 0.95), chain = TRUE, rel_trend = FALSE, estimate_RL = "both", rel_trend = FALSE)
+}
 }
