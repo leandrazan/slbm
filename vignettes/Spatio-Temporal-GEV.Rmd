@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, warning=FALSE, error=FALSE, message=FALSE}
 library(slbm)
 library(dplyr)
 library(tidyr)
@@ -51,9 +51,9 @@ data("ExampleData", package = "slbm")
 data("GMST", package = "slbm")
 ```
 `GMST` contains values of the global mean surface temperature anomaly, which is 
-often considered as THE temporal covariate.  Because the synthetic dataset contains
+often considered as temporal covariate.  Because the synthetic dataset contains
 40
-blocks of 90 observations each (corresponding to 40 years of observations from a 
+block of 90 observations each (corresponding to 40 years of observations from a 
 season of length 90), we have to prepare the temporal covariate accordingly.
 Further, we reconstruct the same spatial covariates that were used when generating 
 the data. 
@@ -67,12 +67,12 @@ spatial_cvrt <- data.frame(lat  = seq(0, 8, length = 8),
 ```
 
 Now we compute (stationwise) the unique combinations of temporal covariate and values of sliding block maxima of blocksize $r$ 
-and their respective frequency of occurence, saved to the variable $n$. This is done with the function 
+and their respective frequency of occurence. This is done with the function 
 `get_uniq_bm()`.
 
 ```{r}
 yy <- data.frame(ExampleData) %>%
-      tidyr::pivot_longer(1:8, names_to = "Station", values_to = "Obs")
+      tidyr::pivot_longer( 1:8, names_to = "Station", values_to = "Obs")
 bmuniq <- get_uniq_bm(yy, 90, temp_cvrt = tempcvsl$GMST, looplastblock = FALSE)
 bmuniq
 bmuniq[1, ]$uniq_data
