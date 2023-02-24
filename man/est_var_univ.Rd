@@ -46,4 +46,16 @@ GEV parameter covariance matrix for sliding blocks ML estimator
 }
 \examples{
 ### simulate some data with a linear trend
+xx <- evd::rgpd(90*100, shape = 0.2) + 2*rep(1:100/100, each = 90)
+## temporal covariate for sliding BM
+temp_cvrt <- rep(1:100/100, each = 90)[1:(90*100 - 90 +1)]
+
+## compute sample of uniuqe sliding BM
+bms <- get_uniq_bm(xx, 90, temp_cvrt = temp_cvrt, looplastblock = FALSE)
+
+## full sample of sliding for estimaing the covariance matrix
+slbm <- blockmax(xx, r = 90, "sliding")
+estim <- fit_gev_univ(data = bms, type = "shift", hessian = TRUE)
+est_var_univ(slbm, est_par = estim, blcksz = 90, temp.cov = temp_cvrt,
+varmeth = "both", type = "shift", chain = TRUE)
 }

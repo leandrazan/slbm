@@ -25,9 +25,9 @@
 #' df.xx <- data.frame(Station = "X1", Obs = xx)
 #' k <- 4
 #' ndata <- blcksz * ny
-#' .nKblocks <- ceiling(ndata/(k*blcksz))
-#' indexblock <- data.frame(blockind = c(rep(1:(.nKblocks-1), each = k*blcksz),
-#'                                       rep(.nKblocks, ndata - k*blcksz*(.nKblocks-1))),
+#' nKblocks <- ceiling(ndata/(k*blcksz))
+#' indexblock <- data.frame(blockind = c(rep(1:(nKblocks-1), each = k*blcksz),
+#'                                       rep(nKblocks, ndata - k*blcksz*(nKblocks-1))),
 #'                          obsind = 1:ndata)
 #'
 #' sluniq_wb <- get_uniq_bm_boot(df.xx, blcksz = blcksz, K = k, indexblock = indexblock,
@@ -39,8 +39,10 @@ get_uniq_bm_boot <- function (data, blcksz, K,  indexblock, temp_cvrt = NULL,
 
 
   ndat <- nrow(data)
-  # fill up last Kblock if it contains less observations than the other blocks
+  # fill up last Kblock if it contains less observations than the other blocks,
+  # observations of last block are repeated, not sure if that's the best method
   if(!(ndat/(K*blcksz)  == floor(ndat/(K*blcksz)))) {
+    browser()
     m <- ceiling(ndat/blcksz)
     mk <- floor(m/K)
     diffmk <- K - m + mk*K
@@ -49,6 +51,7 @@ get_uniq_bm_boot <- function (data, blcksz, K,  indexblock, temp_cvrt = NULL,
   }
   data$Kblockind <- indexblock$blockind
 
+  # when using temporal covariate
   if (!is.null(temp_cvrt)) {
     n.cvrt <- length(temp_cvrt)
     # add column containing the temporal covariate. If temporal covariate is given for
@@ -96,7 +99,6 @@ get_uniq_bm_boot <- function (data, blcksz, K,  indexblock, temp_cvrt = NULL,
 
   else {
     if(returnfullsamp) {
-
       uu <- data %>% dplyr::group_by(Station, Kblockind) %>% tidyr::nest() %>%
         dplyr::mutate(full_data = purrr::map(.x = data, .f = function(.x) {
 
@@ -115,6 +117,7 @@ get_uniq_bm_boot <- function (data, blcksz, K,  indexblock, temp_cvrt = NULL,
 
 
     } else {
+
       data %>% dplyr::group_by(Station, Kblockind) %>% tidyr::nest() %>%
         dplyr::mutate(uniq_data = purrr::map(.x = data, .f = function(.x) {
 

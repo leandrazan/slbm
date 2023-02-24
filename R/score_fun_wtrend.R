@@ -6,7 +6,9 @@
 
 # passt auch für xi = 0
 
-
+# chain = TRUE returns the three-dimensional score function evaluated at (\mu(t), \sigma(t), \gamma),
+# while chain = FALSE returns the four-dimensional score function evaluated at (\mu, \sigma, \gamma, \alpha).
+# (only option chain = FALSE returns something for stationary model)
 score.fun <- function(x, theta, temp.cov = NULL, type = "shift", chain = TRUE,
                       ...) {
 
@@ -290,6 +292,8 @@ AllDiags2 <- function(inmat) {
 
 # computes the covariance matrix of the scorefunctions evaluated in estimates of (mu(ct), sigma(ct), gamma) (shift model)
 # and in estimates of (0,1,gamma) based on scaled BM (scale model) so that one can apply the chain rule
+# i.e. the values of 1/k* 2/r\sum_{j = 0}^{r-1}\hat{\Gamma}(1,j) with k the number of disjoint blocks
+# (i.e., years with available observations).
 compute_cov_stat_4chain <- function(Y, varmeth, k, useobs, blcksz) {
 
   Yloc <- Y[1, 1:useobs]
@@ -356,7 +360,11 @@ compute_cov_stat_4chain <- function(Y, varmeth, k, useobs, blcksz) {
 }
 
 
-# applies the chain rule to the estimated covariance matrices
+# computes values of 1/k\sum_{ j = 1}^k J_{\hat\vartheta}^{-1} B(c^{(t)}) T_{\sigma(c^{(t)})^{-1}
+# \hat\Gamma  T_{\sigma(c^{(t)})^{-1} B(c^{(t)})J_{\hat\vartheta}^{-1}
+# (for the scale model, similar for the shift model)
+# where \hat\Gamma is the matrix returned by compute_cov_stat_4chain, i.e.
+# 1/k* 2/r\sum_{j = 0}^{r-1}\hat{\Gamma}(1,j)
 compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
 
   add.args <- list(...)
@@ -388,14 +396,17 @@ compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
       meanc <- mean(temp_cvrt, na.rm = TRUE)
       meancsq <- mean(temp_cvrt^2, na.rm = TRUE)
 
+      ## Scaling: T_{\sigma(c(t))}^{-1} %*% covstat %*% T_{\sigma(c(t))}^{-1}.
       covstat2[1:2, 1:2] <- covstat[1:2, 1:2]/sigma0^2
       covstat2[3, 1:2] <- covstat2[1:2, 3] <- covstat[3, 1:2]/sigma0
 
+      # compute values of fourth row/column
       sigma14 <- meanc/sigma0*(mu0/sigma0*covstat[1,1] + covstat[1,2])
       sigma24 <- meanc/sigma0*(mu0/sigma0*covstat[1,2] + covstat[2,2])
       sigma34 <- meanc*(mu0/sigma0*covstat[1,3] + covstat[2,3])
       sigma44 <- meancsq*( mu0/sigma0*(mu0/sigma0*covstat[1,1] + covstat[1,2]) + (mu0/sigma0*covstat[1,2] + covstat[2,2]))
 
+      # assemble
       covstat2 <- cbind(covstat2, c(sigma14, sigma24, sigma34))
       covstat2 <- rbind(covstat2, c(sigma14, sigma24, sigma34, sigma44))
 
@@ -403,6 +414,7 @@ compute_cov_nonstat_chain <- function(covstat, type, temp_cvrt, Jinv, ...) {
     }
     else{
 
+      # more difficult when rel_trend = TRUE
       alpha0 <- param["alpha"]
       sigma0 <- param["sigma"]
       mu0 <- param["mu"]
@@ -484,7 +496,9 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
   fishestinv <- solve(fishest)
 
+  ## compute the values of g_{\hat\vartheta}(M) = J_{\hat\vartheta}^{-1}\dot\ell_{\hat\vartheta}(M),
   Y <- (fishestinv %*% score.bdata)
+
 
   useobs <- k*blcksz
 
@@ -575,6 +589,8 @@ est_var_univ_nochain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
     Yloc <- Y[1, 1:useobs]
     Yscale <- Y[2, 1:useobs ]
     Yshape <- Y[3, 1:useobs]
+
+    # compute values for Equation (9) (i,e, eq:cov:y1jynujstrich) in manuscript
 
     m  <- t(matrix(Yshape, nrow = blcksz, ncol = k))
     cm <- cov(m)
@@ -689,11 +705,13 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
 
   temp_cvrt_sl <- temp.cov[1:length(orig_slbm)]
+
+  ## compute the values of \dot\ell_{(\mu(t), \sigma(t), \gamma)}(M),
   Y <- score.fun(orig_slbm, theta =  est_par$mle, temp.cov = temp_cvrt_sl,
                  chain = TRUE,
                  type = type, rel_trend = add.args$rel_trend)
 
-
+  ### necessary because of Equations (20), (21) in scale model
   if(type == "scale") {
     temp_cvrt_score <- temp.cov[1:ncol(Y)]
     sigma0 <- est_par$mle[2]
@@ -715,11 +733,14 @@ est_var_chain <- function(orig_slbm, est_par, blcksz,  temp.cov =  NULL,
 
   fishest <- est_par$hessian
 
+  ## compute values of J_{\hat\vartheta}^{-1}
   fishestinv <- tryCatch(solve(fishest), error = function(a) array(dim = c(4,4)))
-
   # list with covariance matrices
+  # computes the covariance matrix of the scorefunctions evaluated in estimates of (mu(ct), sigma(ct), gamma) (shift model)
+  # and in estimates of (0,1,gamma) based on scaled BM (scale model) so that one can apply the chain rule
   Gammahat <- compute_cov_stat_4chain(Y = Y, varmeth = varmeth, k = k, useobs = useobs, blcksz = blcksz)
 
+  #  now finally compute the covariance matrix
   purrr::map(Gammahat, ~ compute_cov_nonstat_chain(.x, type = type, temp_cvrt = temp_cvrt_sl,
                                                    Jinv = fishestinv,
                                                    rel_trend = add.args$rel_trend,

@@ -37,6 +37,7 @@
 #' @return Tibble containing the estimated parameters, the estimation method, the
 #' estimated quantiles, the test set as well as the corresponding quantile scores for every
 #' cross-validation test set.
+#' @export
 #' @examples
 #' df <- data.frame(obs = evd::rgpd(30*50), Index = rep(1:50, each = 30))
 #' concbm <- compute_conc_bm(df, nlo = 3, blcksz = 30)
@@ -54,7 +55,7 @@ fit_gev_cv_qs <- function(djbm, slbm, conc_bm, method = "both", testset = "conse
                        quants = 1-1/c(2,5,10, 20, 50, 100, 200 ),n.lo = 3,  n.cv = NULL,
                        fixpar = NULL){
   n.years <- nrow(djbm)
-#
+
   if(testset == "consec") {
     cvstart <- seq(1, n.years, n.lo)
     sbst <- purrr::map(cvstart, ~ .x + (0:(n.lo -1)))
