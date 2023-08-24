@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Estimating parameters of (non-)stationary GEV models and their estimation uncertainty</title>
+
+<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Estimating parameters of (non-)stationary GEV models and their estimation uncertainty</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(slbm)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<p>This vignette describes the (non-)stationary univariate models that can be fitted based on sliding block maxima with the <code>slbm</code> package.</p>
+<div id="preliminaries-and-model-assumptions" class="section level2">
+<h2>Preliminaries and Model assumptions</h2>
+<p>The univariate models treated here assume that every block maximum <span class="math display">\[ M_{r,i}^{(t)} = \max\{ X_i^{(t)}, \ldots, X_r^{(t)}, X_1^{(t+1)}, \ldots, X_{i-1}^{(t+1)} \}, \
+i = 1, \ldots, r, \ t = 1, \ldots, m,\]</span> that is computed over a block containing <span class="math inline">\(r\)</span> of the observations <span class="math inline">\((X_j^{(t)})_{j,t}\)</span> and that starts in year <span class="math inline">\(t\)</span> satisfies</p>
+<p><span class="math display">\[   M_{r,i}^{(t)} \sim \mathrm{GEV}(\mu(t), \sigma(t), \gamma), \]</span></p>
+<p>where <span class="math inline">\(\mathrm{GEV}(\mu(t), \sigma(t), \gamma)\)</span> has distribution function</p>
+<p><span class="math display">\[ F_{(\mu(t), \sigma(t), \gamma)}(x) = \exp\left( - \left(  1 + \gamma \frac{ x - \mu(t)}{\sigma(t)} \right)_+^{-\frac1\gamma} \right). \]</span> The models for the location and scale parameter are</p>
+<ul>
+<li>stationary model:</li>
+</ul>
+<p><span class="math display">\[ \mu(t) \equiv \mu, \ \sigma(t) \equiv \sigma.   \]</span></p>
+<ul>
+<li>shift model:</li>
+</ul>
+<p><span class="math display">\[ \mu(t) =  \mu + \alpha \mathrm{GMST}(t), \ \sigma(t) \equiv \sigma.   \]</span></p>
+<ul>
+<li>scale model:</li>
+</ul>
+<p><span class="math display">\[ \mu(t) =  \mu \exp\left( \alpha\mathrm{GMST}(t) \right), \
+   \sigma(t) = \sigma \exp\left( \alpha \mathrm{GMST}(t) \right).   \]</span></p>
+<ul>
+<li>scale model, with trend relative to location parameter:</li>
+</ul>
+<p><span class="math display">\[ \mu(t) =  \mu \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right), \
+   \sigma(t) = \sigma \exp\left( \frac{\alpha}{\mu} \mathrm{GMST}(t) \right).   \]</span></p>
+<p>The usual definition of a return level is not compatible with the non-stationary models. One has to choose a <em>reference climate</em> for which one wants to estimate the Return Level. For example, an estimate for the 100-year RL in the climate of 1970 is given through <span class="math display">\[ F^{-1}_{(\hat\mu(1970), \hat\sigma(1970), \gamma)}(1-1/100), \]</span> where <span class="math inline">\(\hat\mu(1970)\)</span> and <span class="math inline">\(\hat\sigma(1970)\)</span> are estimates for the location and scale parameter of the chosen distribution in year 1970.</p>
+<p>The function <code>fit_gev_univ</code> can fit these models based on sliding block maxima. To obtain confidence intervals for the estimated parameters or for estimated return levels, one can employ the function <code>ci_student_boot_sl</code>. As the name suggests, it performs a studentised bootstrap procedure based on sliding block maxima. To obtain a bootstrap sample, a block bootstrap is performed. For the block-bootstrap-parameter <span class="math inline">\(K\)</span> (which has to be chosen by you), this works as follows:</p>
+<ol style="list-style-type: decimal">
+<li>The daily observations are grouped into disjoint blocks consisting of the observations from <span class="math inline">\(K\)</span> seasons, yielding <span class="math inline">\(\lceil m/K \rceil\)</span> larger blocks.</li>
+<li>Within these larger disjoint blocks, sliding block maxima are computed.</li>
+<li>Based on this <em>full</em> sample, the parameters (or return levels), and their estimation variances, are estimated.</li>
+<li>The indices of the larger blocks that will make up the bootstrap sample are chosen by sampling randomly with replacement from the indices <span class="math inline">\(1, \ldots, \lceil m/K \rceil\)</span>.</li>
+<li>The bootstrap sample is assembled by concatening all block maxima from the larger blocks that were chosen in step 4.</li>
+<li>The model is fitted on the bootstrap sample (and, if required, return levels are estimated). Further, estimates of the variances are computed.</li>
+<li>For each parameter (or return level) that is to be estimated, <span class="math inline">\(\alpha/2\)</span> and <span class="math inline">\(1-\alpha/2\)</span> quantiles of the studentised bootstrap estimates are computed, where <span class="math inline">\(\alpha\)</span> denotes the confidence level.</li>
+<li>For each parameter (or return level) that is to be estimated, the quantiles from step 7 are multiplied by the standard deviations obtained in step 3, and then substracted from the estimates of step 3, resulting in the confidence intervals <span class="math display">\[( \hat\vartheta - \widehat{\mathrm{se}}(\hat\vartheta) t^*_{1-\alpha/2}, \hat\vartheta - \widehat{\mathrm{se}}(\hat\vartheta) t^*_{\alpha/2}), \]</span> where here <span class="math inline">\(\vartheta\)</span> denotes one of the parameters or RLs that are to be estimated.</li>
+</ol>
+</div>
+<div id="application-to-real-data" class="section level2">
+<h2>Application to real data</h2>
+<p>In attribution studies, the shift model is often used for seasonal maxima of daily maximum temperatures, while the scale model is usually applied when analysing seasonal maxima of daily cumulated precipitation amounts.</p>
+<p>Therefore we will fit the two non-stationary models to some example data sets of the mentioned types in the following.</p>
+<div id="the-shift-model" class="section level3">
+<h3>The shift model</h3>
+<p>We start with the shift model. The <code>DailyTempNRW</code> data is a list with list components <code>TimeSeries</code> which contains measurements of daily maximum temperatures, and <code>SpatialCov</code> which contains station metadata. The latter will not be needed during this analysis, because we want to fit a univariate model. Therefore we restrict the analysis to the data from the Station <code>Aachen</code> and suppose we want to fit a model for summer’s daily maximum temperatures.</p>
+<p>The <code>GMST</code> data contains values of the global mean surface temperature as well as a smoothed version of it.</p>
+<p>We start by loading the data and extracting the relevant observations that were made at Aachen.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;GMST&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;DailyTempNRW&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># extract observations from Aachen along with the Date of observation. </span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>dailyAach <span class="ot">&lt;-</span> DailyTempNRW<span class="sc">$</span>TimeSeries <span class="sc">%&gt;%</span> <span class="fu">select</span>(Datetime, Aachen)  </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the data</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dailyAach, <span class="fu">aes</span>( <span class="at">x =</span> Datetime, <span class="at">y =</span> Aachen)) <span class="sc">+</span> <span class="fu">geom_line</span>()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: Removed 736 row(s) containing missing values (geom_path).</span></span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#  in the plot we see that from 2011 onwards there is no data, </span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># so we choose only years up to 2010:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>dailyAach <span class="ot">&lt;-</span>  dailyAach <span class="sc">%&gt;%</span> <span class="fu">filter</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(Datetime) <span class="sc">&lt;=</span> <span class="dv">2010</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">anyNA</span>(dailyAach) <span class="co"># no NA&#39;s left</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p>Also, we need to extract the matching covariate values from the <code>GMST</code> data.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first and last year with observations:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>fl_year <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">min</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(dailyAach<span class="sc">$</span>Datetime)), <span class="fu">max</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(dailyAach<span class="sc">$</span>Datetime)))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>gmst <span class="ot">&lt;-</span> GMST <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Year <span class="sc">&gt;=</span> fl_year[<span class="dv">1</span>], Year <span class="sc">&lt;=</span> fl_year[<span class="dv">2</span>])</span></code></pre></div>
+<p>This gives us 81 seasons of observations, and the seasonlength, i.e. the blocksize is <code>30 + 31+ 31 = 92</code>. We want to compute parameter estimates for the shift model along with their 95% confidence intervals. Further, we want to compute estimates of the 100-year Return Level for the reference climates of years 1970 and 2010, again with confidence intervals.</p>
+<p>The function <code>ci_student_boot_sl</code> does all that for us. A look into the function documentation tells us that it takes the following input: the daily observations as a numeric vector, the blocksize, the bootstrap parameter <span class="math inline">\(K\)</span>, the number of bootstrap repetitions, the temporal covariate (one value for each day with an observation), the model type (i.e. one of <code>shift</code>, <code>scale</code> or <code>stationary</code>), the return periods for which we want to compute the Return Levels, the global mean surface temperatures as observed in the reference years and some other fine tuning parameters.</p>
+<p>As mentioned above, in our example the blocksize is 92, and the reference climates for which we want to compute the are 1970 and 2010. Further, we choose the block-bootstrap parameter as <span class="math inline">\(K = 4\)</span>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>blcksz <span class="ot">&lt;-</span> <span class="dv">92</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>refgmst <span class="ot">&lt;-</span> gmst <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1970</span>, <span class="dv">2010</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>res_shift <span class="ot">&lt;-</span> <span class="fu">ci_student_boot_sl</span>(<span class="at">x =</span> dailyAach<span class="sc">$</span>Aachen, <span class="at">blcksz =</span> blcksz,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">temp.cov =</span> <span class="fu">rep</span>(gmst<span class="sc">$</span>smoothedGMST, <span class="at">each =</span> blcksz),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B =</span> <span class="dv">200</span>, <span class="at">type =</span> <span class="st">&quot;shift&quot;</span>, <span class="at">Tyrl =</span> <span class="dv">100</span>, <span class="at">Kblock =</span> <span class="dv">4</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref_gmst =</span> refgmst<span class="sc">$</span>smoothedGMST, <span class="at">estimate_RL =</span> <span class="st">&quot;both&quot;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                   )</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>res_shift<span class="sc">$</span>res_par  <span class="co"># results for parameter estimation</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 x 7</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   parameter par_est  lower  upper  varest varmeth Kblock</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 mu         31.6   30.9   32.2   0.100   resV2        4</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 sigma       2.12   1.81   2.59  0.0286  resV2        4</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 shape      -0.285 -0.408 -0.168 0.00388 resV2        4</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 alpha       1.60  -0.218  4.12  0.844   resV2        4</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>res_shift<span class="sc">$</span>res_rl  <span class="co"># results for RL estimation</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 x 15</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   var_hat refGMST  Year  qupp  qlow    rl lower upper varmeth    mu sigma  shape alpha Kblock rlfull</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   0.164  0.0275   100 1.44  -6.00  37.0  36.5  39.5 resV2    31.6  2.12 -0.285  1.60      4   37.1</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   0.486  0.665    100 0.927 -2.47  38.1  37.4  39.8 resV2    31.6  2.12 -0.285  1.60      4   38.1</span></span></code></pre></div>
+<p>We can see that the confidence interval for the trend parameter <span class="math inline">\(\alpha\)</span> is quite large and contains 0, which would correspond to the stationary model. We can compare this model fit to the fit of the stationary model.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>res_stationary <span class="ot">&lt;-</span> <span class="fu">ci_student_boot_sl</span>(<span class="at">x =</span> dailyAach<span class="sc">$</span>Aachen, <span class="at">blcksz =</span> blcksz,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">B =</span> <span class="dv">200</span>, <span class="at">type =</span> <span class="st">&quot;stationary&quot;</span>, <span class="at">Tyrl =</span> <span class="dv">100</span>, <span class="at">Kblock =</span> <span class="dv">4</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">estimate_RL =</span> <span class="st">&quot;both&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                   )</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>res_stationary<span class="sc">$</span>res_par  <span class="co"># results for parameter estimation</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 x 7</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   parameter par_est  lower  upper  varest varmeth Kblock</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 loc        31.8   31.4   32.4   0.0760  resV2        4</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 scale       2.17   1.86   2.73  0.0336  resV2        4</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 shape      -0.292 -0.464 -0.177 0.00407 resV2        4</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>res_stationary<span class="sc">$</span>res_rl  <span class="co"># results for RL estimation</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 x 14</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   var_hat refGMST  Year  qupp  qlow    rl lower upper varmeth   loc scale  shape Kblock rlfull</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   0.115     0.8   100  1.78 -2.47  37.3  36.7  38.2 resV2    31.8  2.17 -0.292      4   37.3</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   0.115     0.9   100  1.78 -2.47  37.3  36.7  38.2 resV2    31.8  2.17 -0.292      4   37.3</span></span></code></pre></div>
+</div>
+<div id="the-scale-model" class="section level3">
+<h3>The scale model</h3>
+<p>The dataset <code>dailyPrec</code> contains daily cumulated precipitation amounts that were observed in Aachen. As before, we load the dataset, have a look at its observations, prepare it and then fit the scale model to summer maxima.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;dailyPrec&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dailyPrec, <span class="fu">aes</span>( <span class="at">x =</span> Date, <span class="at">y =</span> cumPrec)) <span class="sc">+</span> <span class="fu">geom_line</span>()</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>As we can see, there is a gap with missing observation in the early 1900s and in 1945. We therefore check which years are available and then extract the corresponding covariate values from <code>GMST</code>. Then we save the observations made during summer months (JJA) to a vector named <code>summerobs</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>summerobs <span class="ot">&lt;-</span> (dailyPrec <span class="sc">%&gt;%</span> <span class="fu">filter</span>(lubridate<span class="sc">::</span><span class="fu">month</span>(Date) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>)))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>years_avail <span class="ot">&lt;-</span> <span class="fu">unique</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(summerobs<span class="sc">$</span>Date))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>gmst <span class="ot">&lt;-</span> GMST <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Year <span class="sc">%in%</span> years_avail)</span></code></pre></div>
+<p>Now we have everything we need to fit the model and compute CIs. Again, we want to compare the RLs for reference climates of years 1970 and 2010.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>blcksz <span class="ot">&lt;-</span> <span class="dv">92</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>refgmst <span class="ot">&lt;-</span> gmst <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1970</span>, <span class="dv">2010</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>res_scale <span class="ot">&lt;-</span> <span class="fu">ci_student_boot_sl</span>(<span class="at">x =</span> summerobs<span class="sc">$</span>cumPrec, <span class="at">blcksz =</span> blcksz,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">temp.cov =</span> <span class="fu">rep</span>(gmst<span class="sc">$</span>smoothedGMST, <span class="at">each =</span> blcksz),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B =</span> <span class="dv">200</span>, <span class="at">type =</span> <span class="st">&quot;scale&quot;</span>, <span class="at">Tyrl =</span> <span class="dv">100</span>, <span class="at">Kblock =</span> <span class="dv">4</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref_gmst =</span> refgmst<span class="sc">$</span>smoothedGMST, <span class="at">estimate_RL =</span> <span class="st">&quot;both&quot;</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">rel_trend =</span> <span class="cn">FALSE</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                   )</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>res_scale<span class="sc">$</span>res_par  <span class="co"># results for parameter estimation</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 x 7</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   parameter par_est   lower  upper  varest varmeth Kblock</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 mu        24.6    23.0    26.5   0.777   resV2        4</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 sigma      7.66    6.74    9.32  0.418   resV2        4</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 shape      0.147   0.0429  0.273 0.00410 resV2        4</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 alpha      0.0155 -0.154   0.191 0.00946 resV2        4</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>res_scale<span class="sc">$</span>res_rl  <span class="co"># results for RL estimation</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 x 15</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   var_hat refGMST  Year  qupp  qlow    rl lower upper varmeth    mu sigma shape  alpha Kblock rlfull</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1    79.8  0.0275   100  1.23 -2.37  75.0  64.0  96.2 resV2    24.6  7.66 0.147 0.0155      4   74.6</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   112.   0.665    100  1.24 -1.75  75.8  62.6  94.2 resV2    24.6  7.66 0.147 0.0155      4   72.4</span></span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

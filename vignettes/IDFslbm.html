@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Fit IDF model based on sliding BM</title>
+
+<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Fit IDF model based on sliding BM</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(slbm)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<p>This vignette explains how to use the functions provided in the <code>slbm</code> package for fitting IDF (Intensity-Duration-Frequency) models to data based on sliding block maxima.</p>
+<div id="preparing-data" class="section level3">
+<h3>Preparing data</h3>
+<p>First, we load a precipitation data set of hourly measurements from Essen as provided by the DWD. We load it by running <code>data(&quot;precEssen&quot;)</code> as it is an example data set in this package.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;precEssen&quot;</span>, <span class="at">package =</span> <span class="st">&quot;slbm&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(precEssen)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   X          MESS_DATUM  RR RS_IND</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 1 1996-01-01 00:00:00 0.1      1</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2 1996-01-01 01:00:00 0.0      1</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 3 1996-01-01 02:00:00 0.0      0</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 4 1996-01-01 03:00:00 0.0      0</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 5 1996-01-01 04:00:00 0.0      0</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 6 1996-01-01 05:00:00 0.0      0</span></span></code></pre></div>
+<p>The first column , <code>X</code>, is just a counter of observations, and we do not need it. The functions for computing sliding block maxima of the intensity duration process expect a tibble or data frame as input, that has <em>only</em> columns named <code>datetime</code> containing the date and time of the measurement, as well as <code>prec</code> containing the observed precipitation amount. Therfore we prepare the dataset as follows</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>precEssen <span class="ot">&lt;-</span> precEssen <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">c</span>(RR, MESS_DATUM)) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;datetime&quot;</span> <span class="ot">=</span> <span class="st">&quot;MESS_DATUM&quot;</span>, <span class="st">&quot;prec&quot;</span> <span class="ot">=</span> <span class="st">&quot;RR&quot;</span>)</span></code></pre></div>
+<p>Now we can compute block maxima of the intensity duration process for several values of the duration <span class="math inline">\(d\)</span>, from one hour (resolution of the data) up to 3 days.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dur <span class="ot">&lt;-</span>  <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">8</span>,<span class="dv">24</span>,<span class="dv">48</span>, <span class="dv">72</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>agbm <span class="ot">&lt;-</span> <span class="fu">get_agg_bm</span>(<span class="at">data =</span> precEssen, <span class="at">ds =</span> dur)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>agbm</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7 x 3</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   djbm          duration slbm              </span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;list&gt;           &lt;dbl&gt; &lt;list&gt;            </span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 &lt;df [25 x 3]&gt;        1 &lt;df [217,713 x 2]&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 &lt;df [25 x 3]&gt;        2 &lt;df [217,712 x 2]&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 &lt;df [25 x 3]&gt;        4 &lt;df [217,710 x 2]&gt;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 &lt;df [25 x 3]&gt;        8 &lt;df [217,706 x 2]&gt;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 &lt;df [25 x 3]&gt;       24 &lt;df [217,690 x 2]&gt;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 &lt;df [25 x 3]&gt;       48 &lt;df [217,666 x 2]&gt;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7 &lt;df [25 x 3]&gt;       72 &lt;df [217,642 x 2]&gt;</span></span></code></pre></div>
+<p>The output of <code>get_agg_bm()</code> is a tibble containing data of disjoint and sliding block maxima. The column <code>duration</code> contains the chosen durations <span class="math inline">\(d\)</span>, the column <code>djbm</code> contains dataframes with blockmaxima of the ID process of the respective duration and the year/season in which the maximum was observed. The column <code>slbm</code> is similar; here, the year in which the block maximum was observed is the year in which the first observation of the block was made.</p>
+<p>For faster cross-validation, we also need the output of <code>conc_bm()</code>, which computes sliding block maxima for the time series that arises when removing observation from some years. See the function documentation of <code>conc_bm()</code> for further details. The input is the tibble containing the ID processes, as genereated by <code>fun_aggregate2df()</code>. Since we want to perform cross-validation with test sets of size 3 (containing disjoint block maxima from three consecutive years), we specify <code>nlo = 3</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>agdf <span class="ot">&lt;-</span> <span class="fu">fun_aggregate2df</span>(precEssen, <span class="at">ds =</span> dur )</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>concbm <span class="ot">&lt;-</span> <span class="fu">compute_conc_bm_id</span>(agdf, <span class="at">nlo =</span> <span class="dv">3</span>, <span class="at">testset =</span> <span class="st">&quot;consec&quot;</span>) <span class="co"># takes a while.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>concbm</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 7 x 3</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    ind1  ind2 newslbm         </span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;list&gt;          </span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  1998  2002 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  2001  2005 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  2004  2008 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  2007  2011 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  2010  2014 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6  2013  2017 &lt;tibble [7 x 2]&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7  2016  2020 &lt;tibble [7 x 2]&gt;</span></span></code></pre></div>
+</div>
+<div id="estimate-parameters-and-compute-quantile-scores" class="section level3">
+<h3>Estimate parameters and compute Quantile Scores</h3>
+<p>Now we have everything to estimate parameters of the d-GEV distribution along with its quantiles and evaluate the estimation based on cross-validation.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">fit_dgev_cv_qs</span>(<span class="at">agg_bm =</span> agbm, <span class="at">conc_bm =</span> concbm, <span class="at">ds =</span> dur, <span class="at">quants =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>, <span class="fl">0.99</span>, <span class="fl">0.995</span>), </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">mult_sc =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>cv_res</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 672 x 12</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      mut sigma0    shape   eta  eta2 estimator  conv    ps    ds est.quants Testdata         quant_score</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;     &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt; &lt;list&gt;                 &lt;dbl&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1  2.72   5.94  0.0556  0.730 0.144 disjoint      0   0.5     1      18.3  &lt;tibble [3 x 1]&gt;       3.63 </span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2  2.80   5.89 -0.00685 0.731 0.110 sliding       0   0.5     1      18.6  &lt;tibble [3 x 1]&gt;       3.58 </span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3  2.72   5.94  0.0556  0.730 0.144 disjoint      0   0.5     2      10.5  &lt;tibble [3 x 1]&gt;       2.17 </span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4  2.80   5.89 -0.00685 0.731 0.110 sliding       0   0.5     2      10.6  &lt;tibble [3 x 1]&gt;       2.14 </span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5  2.72   5.94  0.0556  0.730 0.144 disjoint      0   0.5     4       6.10 &lt;tibble [3 x 1]&gt;       0.684</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6  2.80   5.89 -0.00685 0.731 0.110 sliding       0   0.5     4       6.22 &lt;tibble [3 x 1]&gt;       0.704</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7  2.72   5.94  0.0556  0.730 0.144 disjoint      0   0.5     8       3.61 &lt;tibble [3 x 1]&gt;       0.485</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8  2.80   5.89 -0.00685 0.731 0.110 sliding       0   0.5     8       3.68 &lt;tibble [3 x 1]&gt;       0.474</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9  2.72   5.94  0.0556  0.730 0.144 disjoint      0   0.5    24       1.60 &lt;tibble [3 x 1]&gt;       0.263</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10  2.80   5.89 -0.00685 0.731 0.110 sliding       0   0.5    24       1.63 &lt;tibble [3 x 1]&gt;       0.258</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ... with 662 more rows</span></span></code></pre></div>
+<p>Now we can compute the mean Quantile Scores of the cross-validated Quantiles Scores.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>meanQS <span class="ot">&lt;-</span>  cv_res <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>( <span class="sc">-</span> <span class="fu">c</span>( mut, sigma0, shape, eta, conv, Testdata )) <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>         dplyr<span class="sc">::</span><span class="fu">group_by</span>(ds, ps, estimator) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>         dplyr<span class="sc">::</span><span class="fu">summarise</span>(<span class="at">MQS =</span> <span class="fu">mean</span>(quant_score), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>meanQS</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 84 x 4</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       ds    ps estimator   MQS</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     1  0.5  disjoint  3.21 </span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     1  0.5  sliding   3.21 </span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     1  0.8  disjoint  2.22 </span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     1  0.8  sliding   2.21 </span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     1  0.9  disjoint  1.28 </span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     1  0.9  sliding   1.28 </span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     1  0.95 disjoint  0.841</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     1  0.95 sliding   0.747</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     1  0.99 disjoint  0.310</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     1  0.99 sliding   0.264</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ... with 74 more rows</span></span></code></pre></div>
+<p>Further, we compute the Quantile Skill index and make a heatmap.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>QSI <span class="ot">&lt;-</span> meanQS <span class="sc">%&gt;%</span> <span class="fu">pivot_wider</span>( <span class="at">names_from =</span> estimator, <span class="at">values_from =</span> MQS) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>( <span class="at">QSI =</span> purrr<span class="sc">::</span><span class="fu">map2_dbl</span>( <span class="at">.x =</span> disjoint, <span class="at">.y =</span> sliding, <span class="sc">~</span> <span class="fu">compute_qsi</span>(.y, .x)))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>QSI</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 42 x 5</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       ds    ps disjoint sliding      QSI</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     1 0.5      3.21    3.21   0.00112</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     1 0.8      2.22    2.21   0.00116</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     1 0.9      1.28    1.28  -0.00288</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     1 0.95     0.841   0.747  0.112  </span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     1 0.99     0.310   0.264  0.148  </span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     1 0.995    0.189   0.158  0.163  </span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     2 0.5      1.85    1.85   0.00380</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     2 0.8      1.63    1.65  -0.0121 </span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     2 0.9      1.09    1.14  -0.0393 </span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     2 0.95     0.598   0.673 -0.112  </span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ... with 32 more rows</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>QSI <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_tile</span>(<span class="fu">aes</span>(<span class="at">fill =</span> QSI,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">x=</span> <span class="fu">as.factor</span>(ds),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">y =</span> <span class="fu">as.factor</span>(ps)), <span class="at">color =</span> <span class="st">&quot;black&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">show.legend =</span> <span class="cn">TRUE</span>)<span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>()<span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>( <span class="at">x =</span> <span class="st">&quot;duration [h]&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Probability&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;QSI&quot;</span>)<span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size=</span> <span class="dv">18</span>))</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>If you only want to have the parameter estimates as obtained from the full dataset without cross-validation, and you want to fit the model with a multi-scale parameter, run</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gev.d.fit.sl</span>(agbm, <span class="at">mult_sc =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $mle</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        mut   sigma0      shape       eta      eta2 estimator</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2.691753 5.957403 0.09968085 0.7289929 0.1431634  disjoint</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2.760264 5.820311 0.05302387 0.7280355 0.1132954   sliding</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $conv</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; dj sl </span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0  0 </span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $nllh</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         dj       sl</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 1.493589 1.513139</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $counts</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           SL</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function 444</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; gradient  NA</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $dur_offset</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $mult_sc</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Per default, all additional parameters (duration offset, intensity offset, multi-scale parameter) are not fitted, but can be when the corresponding argument in the fit function is set to <code>TRUE</code>.</p>
+</div>
+<div id="restriction-to-a-season" class="section level3">
+<h3>Restriction to a Season</h3>
+<p>When you want to consider observations that are made during a specific season, you can proceed as follows. First, filter the data that you want to keep, e.g. only observations made during summer months (June, July, August).</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>precSummer <span class="ot">&lt;-</span> precEssen <span class="sc">%&gt;%</span> <span class="fu">filter</span>(lubridate<span class="sc">::</span><span class="fu">month</span>(datetime) <span class="sc">%in%</span> <span class="dv">6</span><span class="sc">:</span><span class="dv">8</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(precSummer)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   prec            datetime</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  0.0 1996-06-01 00:00:00</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  1.2 1996-06-01 01:00:00</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  2.2 1996-06-01 02:00:00</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  0.5 1996-06-01 03:00:00</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  1.0 1996-06-01 04:00:00</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6  1.3 1996-06-01 05:00:00</span></span></code></pre></div>
+<p>The length of the summer season is 92 days, which affects the blocksize for computing block maxima (e.g., for duration <span class="math inline">\(d = 1\)</span>, it is now $ 24  = 2208$). We can pass the new season length to the functions that are affected by that, via the argument <code>seasonlength</code>. The rest works just as for the default case (with seasonlength 365 days) above:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>agdf <span class="ot">&lt;-</span> <span class="fu">fun_aggregate2df</span>(<span class="at">data =</span> precEssen, <span class="at">ds =</span> dur, <span class="at">seasonlength =</span> <span class="dv">92</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>agbm <span class="ot">&lt;-</span> <span class="fu">get_agg_bm</span>(<span class="at">data =</span> precEssen, <span class="at">ds =</span> dur, <span class="at">seasonlength =</span> <span class="dv">92</span>) </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>concbm <span class="ot">&lt;-</span> <span class="fu">compute_conc_bm_id</span>(agdf, <span class="at">seasonlength =</span> <span class="dv">92</span>, <span class="at">testset =</span> <span class="st">&quot;consec&quot;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cv_res <span class="ot">&lt;-</span> <span class="fu">fit_dgev_cv_qs</span>(<span class="at">agg_bm =</span> agbm, <span class="at">conc_bm =</span> concbm, <span class="at">ds =</span> dur, </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">quants =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>, <span class="fl">0.99</span>, <span class="fl">0.995</span>), </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">mult_sc =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>meanQS <span class="ot">&lt;-</span>  cv_res <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>( <span class="sc">-</span> <span class="fu">c</span>( mut, sigma0, shape, eta, conv, Testdata )) <span class="sc">%&gt;%</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>         dplyr<span class="sc">::</span><span class="fu">group_by</span>(ds, ps, estimator) <span class="sc">%&gt;%</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>         dplyr<span class="sc">::</span><span class="fu">summarise</span>(<span class="at">MQS =</span> <span class="fu">mean</span>(quant_score), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>meanQS</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 84 x 4</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       ds    ps estimator   MQS</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     1  0.5  disjoint  3.09 </span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     1  0.5  sliding   3.07 </span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     1  0.8  disjoint  2.81 </span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     1  0.8  sliding   2.66 </span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     1  0.9  disjoint  1.88 </span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     1  0.9  sliding   1.80 </span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     1  0.95 disjoint  1.23 </span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     1  0.95 sliding   1.08 </span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     1  0.99 disjoint  0.301</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     1  0.99 sliding   0.239</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ... with 74 more rows</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>QSI <span class="ot">&lt;-</span> meanQS <span class="sc">%&gt;%</span> <span class="fu">pivot_wider</span>( <span class="at">names_from =</span> estimator, <span class="at">values_from =</span> MQS) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>( <span class="at">QSI =</span> purrr<span class="sc">::</span><span class="fu">map2_dbl</span>( <span class="at">.x =</span> disjoint, <span class="at">.y =</span> sliding, <span class="sc">~</span> <span class="fu">compute_qsi</span>(.y, .x)))</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>QSI</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 42 x 5</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       ds    ps disjoint sliding     QSI</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     1 0.5      3.09    3.07  0.00508</span></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     1 0.8      2.81    2.66  0.0549 </span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     1 0.9      1.88    1.80  0.0455 </span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     1 0.95     1.23    1.08  0.129  </span></span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     1 0.99     0.301   0.239 0.205  </span></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     1 0.995    0.195   0.150 0.229  </span></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     2 0.5      1.66    1.65  0.00285</span></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     2 0.8      1.73    1.64  0.0488 </span></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     2 0.9      1.33    1.26  0.0501 </span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     2 0.95     0.884   0.843 0.0466 </span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ... with 32 more rows</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>QSI <span class="sc">%&gt;%</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_tile</span>(<span class="fu">aes</span>(<span class="at">fill =</span> QSI,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">x=</span> <span class="fu">as.factor</span>(ds),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">y =</span> <span class="fu">as.factor</span>(ps)), <span class="at">color =</span> <span class="st">&quot;black&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">show.legend =</span> <span class="cn">TRUE</span>)<span class="sc">+</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>()<span class="sc">+</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>( <span class="at">x =</span> <span class="st">&quot;duration [h]&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Probability&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;QSI&quot;</span>)<span class="sc">+</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size=</span> <span class="dv">18</span>))</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
